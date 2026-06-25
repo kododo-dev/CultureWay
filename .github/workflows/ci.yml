@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Unit & Integration tests (no Docker needed) ───────────────────────────
+  unit:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/CultureWay.UI/SPA/package-lock.json
+
+      - name: Build SPA
+        working-directory: src/CultureWay.UI/SPA
+        run: |
+          npm ci
+          npm run build
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.x
+            9.x
+            10.x
+          dotnet-quality: preview
+
+      - name: Restore
+        run: dotnet restore src/CultureWay.Tests/CultureWay.Tests.csproj
+
+      - name: Build
+        run: dotnet build src/CultureWay.Tests/CultureWay.Tests.csproj --no-restore --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test src/CultureWay.Tests/CultureWay.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=unit-results.trx"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: "**/*.trx"
+
+  # ── PostgreSQL tests (Testcontainers — needs Docker) ─────────────────────
+  postgres:
+    name: PostgreSQL Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/CultureWay.UI/SPA/package-lock.json
+
+      - name: Build SPA
+        working-directory: src/CultureWay.UI/SPA
+        run: |
+          npm ci
+          npm run build
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.x
+            9.x
+            10.x
+          dotnet-quality: preview
+
+      - name: Restore
+        run: dotnet restore src/CultureWay.PostgreSQL.Tests/CultureWay.PostgreSQL.Tests.csproj
+
+      - name: Build
+        run: dotnet build src/CultureWay.PostgreSQL.Tests/CultureWay.PostgreSQL.Tests.csproj --no-restore --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test src/CultureWay.PostgreSQL.Tests/CultureWay.PostgreSQL.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=postgres-results.trx"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postgres-test-results
+          path: "**/*.trx"

@@ -1,0 +1,80 @@
+## A streamlined .gitignore for modern .NET projects
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# NuGet Packages
+*.nupkg
+# NuGet Symbol Packages
+*.snupkg
+
+# Others
+~$*
+*~
+CodeCoverage/
+
+# MSBuild Binary and Structured Log
+*.binlog
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUnit
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+# Rider / JetBrains IDE
+.idea/
+*.dotsettings.user
+
+# ========================
+# React / Node (SPA/)
+# ========================
+src/CultureWay.UI/SPA/node_modules/
+src/CultureWay.UI/SPA/dist/
+src/CultureWay.UI/SPA/.env.local
+src/CultureWay.UI/SPA/.env.*.local
+
+# Vite / build cache
+src/CultureWay.UI/SPA/.vite/
+
+# Testing
+src/CultureWay.UI/SPA/coverage/
+
+# Editor
+src/CultureWay.UI/SPA/.eslintcache
+
+# Logs
+src/CultureWay.UI/SPA/npm-debug.log*
+src/CultureWay.UI/SPA/yarn-debug.log*
+src/CultureWay.UI/SPA/yarn-error.log*
+src/CultureWay.UI/SPA/pnpm-debug.log*
+
+# ========================
+# OS
+# ========================
+.DS_Store
+Thumbs.db
