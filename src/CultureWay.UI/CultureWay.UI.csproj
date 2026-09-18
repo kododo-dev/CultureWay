@@ -33,7 +33,7 @@
     </ItemGroup>
 
     <PropertyGroup>
-        <Description>Embedded web UI for CultureWay. Adds a React-based localization editor served directly from the host application — no separate deployment required.</Description>
+        <Description>Embedded web UI for CultureWay. Adds a React-based localization editor served directly from the host application, so no separate deployment is needed.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>localization;i18n;translations;editor;web-ui;aspnetcore;react</PackageTags>
         <RepositoryUrl>https://github.com/kododo-dev/CultureWay</RepositoryUrl>

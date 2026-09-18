@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <Description>Core abstractions for CultureWay — the IStore interface and the Translation model. Reference this package when implementing a custom persistence backend.</Description>
+        <Description>Core abstractions for CultureWay: the IStore and IReadOnlySource interfaces and the Translation model. Reference this package when implementing a custom persistence backend.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>localization;i18n;translations;abstractions;aspnetcore</PackageTags>
         <RepositoryUrl>https://github.com/kododo-dev/CultureWay</RepositoryUrl>

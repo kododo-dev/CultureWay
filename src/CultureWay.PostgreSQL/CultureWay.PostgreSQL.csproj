@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <PropertyGroup>
-        <Description>PostgreSQL persistence store for CultureWay. Retains localized strings across application restarts using a single auto-managed database table.</Description>
+        <Description>PostgreSQL persistence store for CultureWay. Keeps translations, added languages and the default language across application restarts using automatically created tables.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>localization;i18n;translations;postgresql;npgsql;aspnetcore</PackageTags>
         <RepositoryUrl>https://github.com/kododo-dev/CultureWay</RepositoryUrl>
