@@ -23,7 +23,7 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
         await using var conn = new NpgsqlConnection(ConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
-            "DELETE FROM cultureway.translations; DELETE FROM cultureway.cultures;", conn);
+            "DELETE FROM cultureway.translations; DELETE FROM cultureway.cultures; DELETE FROM cultureway.settings;", conn);
         await cmd.ExecuteNonQueryAsync();
     }
 }

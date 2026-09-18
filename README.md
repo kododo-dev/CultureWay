@@ -1,6 +1,11 @@
 # CultureWay
 
+[![CI](https://github.com/kododo-dev/CultureWay/actions/workflows/ci.yml/badge.svg)](https://github.com/kododo-dev/CultureWay/actions/workflows/ci.yml)
+[![Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://kododo.dev/cultureway/demo)
+
 Runtime localization editor for ASP.NET Core. Edit translated strings in a built-in web UI and see the changes immediately — no rebuild, no restart. CultureWay plugs into the standard `IStringLocalizer` pipeline, so existing code keeps working.
+
+A live demo is available at [kododo.dev/cultureway/demo](https://kododo.dev/cultureway/demo).
 
 ## Features
 
