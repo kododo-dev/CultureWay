@@ -26,3 +26,12 @@ export const saveTranslations = (
   keysToDelete: TranslationKeyDto[],
 ): Promise<string[]> =>
   post<string[]>('/UpdateTranslations', { translations, keysToDelete });
+
+export const addCulture = (culture: string): Promise<string[]> =>
+  post<string[]>('/AddCulture', { culture });
+
+export const deleteCulture = (culture: string): Promise<string[]> =>
+  post<string[]>('/DeleteCulture', { culture });
+
+export const setDefaultCulture = (culture: string): Promise<string[]> =>
+  post<string[]>('/SetDefaultCulture', { culture });

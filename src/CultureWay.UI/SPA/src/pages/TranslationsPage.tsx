@@ -1,28 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
+import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
-import Badge from '@mui/material/Badge';
-import Chip from '@mui/material/Chip';
-import AddIcon from '@mui/icons-material/Add';
-import SaveIcon from '@mui/icons-material/Save';
-import DeleteIcon from '@mui/icons-material/Delete';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
 import { useTheme } from '@mui/material/styles';
 import { useThemeMode } from '../context/ThemeContext.tsx';
 import { useTranslations } from '../context/TranslationsContext.tsx';
+import { useNamespace, extractNamespace } from '../context/NamespaceContext.tsx';
 import { useI18n } from '../i18n/I18nContext.tsx';
 import { saveTranslations } from '../api/api.ts';
 import type { TranslationDto, TranslationKeyDto } from '../api/api.model.ts';
 import PageHeader from '../components/layout/PageHeader.tsx';
+import AddKeyModal from '../components/translations/AddKeyModal.tsx';
+import ManageLanguagesModal from '../components/translations/ManageLanguagesModal.tsx';
+import SelectionToolbar from '../components/translations/SelectionToolbar.tsx';
+import CultureFlag from '../components/translations/CultureFlag.tsx';
+
+type KeyClassification = 'pending' | 'resettable' | 'deletable' | 'locked';
 
 type LocalMap = Map<string, Map<string, string>>;
+type ExternalMap = Map<string, Map<string, string>>;
 
 function buildLocalMap(translations: TranslationDto[]): LocalMap {
   const map: LocalMap = new Map();
@@ -33,12 +33,28 @@ function buildLocalMap(translations: TranslationDto[]): LocalMap {
   return map;
 }
 
+function buildExternalMap(translations: TranslationDto[]): ExternalMap {
+  const map: ExternalMap = new Map();
+  for (const t of translations) {
+    if (t.hasExternalDefault && t.externalDefaultValue !== null) {
+      if (!map.has(t.key)) map.set(t.key, new Map());
+      map.get(t.key)!.set(t.culture, t.externalDefaultValue);
+    }
+  }
+  return map;
+}
+
 type SnackState =
   | { open: false }
   | { open: true; severity: 'success' | 'error'; messages: string[] };
 
 const TranslationsPage = () => {
-  const { translations, cultures, loading, error, reload } = useTranslations();
+  const { translations, cultures, loading, error, reload, hiddenCultures } = useTranslations();
+  const visibleCultures = useMemo(
+    () => cultures.filter(c => !hiddenCultures.has(c.code)),
+    [cultures, hiddenCultures],
+  );
+  const { selectedNamespace } = useNamespace();
   const { t } = useI18n();
   const theme = useTheme();
   const { mode } = useThemeMode();
@@ -49,39 +65,89 @@ const TranslationsPage = () => {
   const rowHover    = isDark ? '#252525' : '#fafafa';
   const dirtyBg     = isDark ? '#2a2500' : '#fffbeb';
   const deletedBg   = isDark ? '#2a0a0a' : '#fff5f5';
+  const resetBg     = isDark ? '#0a1a2a' : '#f0f7ff';
 
-  // ── local state ──────────────────────────────────────────────────
   const [localMap, setLocalMap]         = useState<LocalMap>(new Map());
   const [keysToDelete, setKeysToDelete] = useState<Set<string>>(new Set());
+  const [keysToReset, setKeysToReset]   = useState<Set<string>>(new Set());
   const [originalMap, setOriginalMap]   = useState<LocalMap>(new Map());
-  const [newKey, setNewKey]             = useState('');
+  const [externalMap, setExternalMap]   = useState<ExternalMap>(new Map());
   const [filter, setFilter]             = useState('');
   const [saving, setSaving]             = useState(false);
   const [snack, setSnack]               = useState<SnackState>({ open: false });
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addLangModalOpen, setAddLangModalOpen] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [prevTranslations, setPrevTranslations] = useState(translations);
 
-  // Sync from API into local state
-  useEffect(() => {
+  if (translations !== prevTranslations) {
+    setPrevTranslations(translations);
     const m = buildLocalMap(translations);
     setLocalMap(new Map(m));
     setOriginalMap(new Map(m));
+    setExternalMap(buildExternalMap(translations));
     setKeysToDelete(new Set());
-  }, [translations]);
+    setKeysToReset(new Set());
+    setSelectedKeys(new Set());
+  }
 
-  // ── derived ──────────────────────────────────────────────────────
   const allKeys = useMemo(() => {
     const keys = new Set<string>();
     for (const k of localMap.keys()) keys.add(k);
     return [...keys].sort((a, b) => a.localeCompare(b));
   }, [localMap]);
 
+  const namespaceLabel = selectedNamespace === null
+    ? t.allNamespaces
+    : selectedNamespace === ''
+      ? t.rootNamespace
+      : selectedNamespace;
+
   const filteredKeys = useMemo(() => {
-    if (!filter) return allKeys;
-    const lo = filter.toLowerCase();
-    return allKeys.filter(k => k.toLowerCase().includes(lo));
-  }, [allKeys, filter]);
+    let keys = allKeys;
+
+    if (selectedNamespace !== null) {
+      keys = keys.filter(k => {
+        const ns = extractNamespace(k);
+        return ns === selectedNamespace || ns.startsWith(`${selectedNamespace}.`);
+      });
+    }
+
+    if (filter) {
+      const lo = filter.toLowerCase();
+      keys = keys.filter(k => {
+        if (k.toLowerCase().includes(lo)) return true;
+        const cultureMap = localMap.get(k);
+        if (cultureMap) {
+          for (const val of cultureMap.values()) {
+            if (val.toLowerCase().includes(lo)) return true;
+          }
+        }
+        return false;
+      });
+    }
+
+    return keys;
+  }, [allKeys, filter, selectedNamespace, localMap]);
+
+  const isKeyFromExternal = useCallback((key: string): boolean => {
+    return externalMap.has(key);
+  }, [externalMap]);
+
+  const hasStoreOverride = useCallback((key: string): boolean => {
+    const extCultures = externalMap.get(key);
+    if (!extCultures) return false;
+    const origCultures = originalMap.get(key);
+    if (!origCultures) return false;
+    for (const [culture, extVal] of extCultures.entries()) {
+      const storeVal = origCultures.get(culture);
+      if (storeVal !== undefined && storeVal !== extVal) return true;
+    }
+    return false;
+  }, [externalMap, originalMap]);
 
   const isDirtyKey = useCallback((key: string): boolean => {
-    if (keysToDelete.has(key)) return true;
+    if (keysToDelete.has(key) || keysToReset.has(key)) return true;
     const orig = originalMap.get(key);
     const curr = localMap.get(key);
     if (!orig && curr) return true;
@@ -90,45 +156,112 @@ const TranslationsPage = () => {
       if ((orig?.get(c.code) ?? '') !== (curr?.get(c.code) ?? '')) return true;
     }
     return false;
-  }, [keysToDelete, originalMap, localMap, cultures]);
+  }, [keysToDelete, keysToReset, originalMap, localMap, cultures]);
 
   const dirtyCount = useMemo(
     () => allKeys.filter(k => isDirtyKey(k)).length,
     [allKeys, isDirtyKey],
   );
 
-  const isDirty = dirtyCount > 0;
+  const classifyKey = useCallback((key: string): KeyClassification => {
+    if (keysToDelete.has(key) || keysToReset.has(key)) return 'pending';
+    if (isKeyFromExternal(key)) return hasStoreOverride(key) ? 'resettable' : 'locked';
+    return 'deletable';
+  }, [keysToDelete, keysToReset, isKeyFromExternal, hasStoreOverride]);
 
-  // ── handlers ─────────────────────────────────────────────────────
+  const selectedArray = useMemo(() => [...selectedKeys], [selectedKeys]);
+  const deletableSelected  = useMemo(() => selectedArray.filter(k => classifyKey(k) === 'deletable'),  [selectedArray, classifyKey]);
+  const resettableSelected = useMemo(() => selectedArray.filter(k => classifyKey(k) === 'resettable'), [selectedArray, classifyKey]);
+  const pendingSelected    = useMemo(() => selectedArray.filter(k => classifyKey(k) === 'pending'),    [selectedArray, classifyKey]);
+
+  const allVisibleSelected = filteredKeys.length > 0 && filteredKeys.every(k => selectedKeys.has(k));
+  const someVisibleSelected = filteredKeys.some(k => selectedKeys.has(k));
+
+  const toggleSelectKey = (key: string) => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        for (const k of filteredKeys) next.delete(k);
+      } else {
+        for (const k of filteredKeys) next.add(k);
+      }
+      return next;
+    });
+  };
+
   const handleCellChange = (key: string, culture: string, value: string) => {
     setLocalMap(prev => {
       const next = new Map(prev);
-      if (!next.has(key)) next.set(key, new Map());
-      next.get(key)!.set(culture, value);
+      const cultureMap = new Map(next.get(key));
+      cultureMap.set(culture, value);
+      next.set(key, cultureMap);
       return next;
     });
+    setKeysToReset(prev => { const n = new Set(prev); n.delete(key); return n; });
   };
 
-  const handleAddKey = () => {
-    const k = newKey.trim();
-    if (!k) return;
+  const handleAddKey = (key: string) => {
     setLocalMap(prev => {
-      if (prev.has(k)) return prev;
+      if (prev.has(key)) return prev;
       const next = new Map(prev);
-      next.set(k, new Map());
+      next.set(key, new Map());
       return next;
     });
-    setKeysToDelete(prev => { const n = new Set(prev); n.delete(k); return n; });
-    setNewKey('');
-  };
-
-  const handleDeleteKey = (key: string) => {
-    if (!window.confirm(t.confirmDelete)) return;
-    setKeysToDelete(prev => new Set([...prev, key]));
-  };
-
-  const handleRestoreKey = (key: string) => {
     setKeysToDelete(prev => { const n = new Set(prev); n.delete(key); return n; });
+    setKeysToReset(prev => { const n = new Set(prev); n.delete(key); return n; });
+  };
+
+  const handleBulkDelete = () => {
+    if (deletableSelected.length === 0) return;
+    if (!window.confirm(t.confirmDeleteSelected)) return;
+    setKeysToDelete(prev => new Set([...prev, ...deletableSelected]));
+    setKeysToReset(prev => { const n = new Set(prev); for (const k of deletableSelected) n.delete(k); return n; });
+    setSelectedKeys(new Set());
+  };
+
+  const handleBulkRestore = () => {
+    if (pendingSelected.length === 0) return;
+    setKeysToDelete(prev => { const n = new Set(prev); for (const k of pendingSelected) n.delete(k); return n; });
+    setKeysToReset(prev => { const n = new Set(prev); for (const k of pendingSelected) n.delete(k); return n; });
+    setSelectedKeys(new Set());
+  };
+
+  const handleBulkReset = () => {
+    if (resettableSelected.length === 0) return;
+    if (!window.confirm(t.confirmResetSelected)) return;
+    setKeysToReset(prev => new Set([...prev, ...resettableSelected]));
+    setKeysToDelete(prev => { const n = new Set(prev); for (const k of resettableSelected) n.delete(k); return n; });
+    // Restore cells to external default for visual preview
+    setLocalMap(prev => {
+      const next = new Map(prev);
+      for (const key of resettableSelected) {
+        const extCultures = externalMap.get(key);
+        if (extCultures) {
+          const cultureMap = new Map<string, string>();
+          for (const [culture, extVal] of extCultures.entries()) {
+            cultureMap.set(culture, extVal);
+          }
+          next.set(key, cultureMap);
+        }
+      }
+      return next;
+    });
+    setSelectedKeys(new Set());
+  };
+
+  const handleDiscard = () => {
+    setLocalMap(new Map(originalMap));
+    setKeysToDelete(new Set());
+    setKeysToReset(new Set());
+    setSelectedKeys(new Set());
   };
 
   const handleSave = async () => {
@@ -136,15 +269,16 @@ const TranslationsPage = () => {
     try {
       const toSave: TranslationDto[] = [];
       for (const [key, cultureMap] of localMap.entries()) {
-        if (keysToDelete.has(key)) continue;
+        if (keysToDelete.has(key) || keysToReset.has(key)) continue;
         for (const [culture, value] of cultureMap.entries()) {
-          if (value.trim() !== '') toSave.push({ key, culture, value });
+          if (value.trim() !== '') toSave.push({ key, culture, value, hasExternalDefault: false, externalDefaultValue: null });
         }
       }
 
-      const toDelete: TranslationKeyDto[] = [...keysToDelete].flatMap(key =>
-        cultures.map(c => ({ key, culture: c.code })),
-      );
+      const toDelete: TranslationKeyDto[] = [
+        ...[...keysToDelete].flatMap(key => cultures.map(c => ({ key, culture: c.code }))),
+        ...[...keysToReset].flatMap(key => cultures.map(c => ({ key, culture: c.code }))),
+      ];
 
       const errors = await saveTranslations(toSave, toDelete);
 
@@ -163,8 +297,8 @@ const TranslationsPage = () => {
 
   const KEY_COL_WIDTH = 220;
   const VAL_COL_WIDTH = 220;
+  const CHECKBOX_COL_WIDTH = 40;
 
-  // ── render ───────────────────────────────────────────────────────
   if (loading) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
@@ -182,85 +316,64 @@ const TranslationsPage = () => {
     );
   }
 
+  const existingKeysSet = new Set(allKeys);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <PageHeader
-        title={t.appTitle}
-        subtitle={`${allKeys.length} keys · ${cultures.length} cultures`}
+        namespaceLabel={namespaceLabel}
+        searchQuery={filter}
+        onSearchChange={setFilter}
+        dirtyCount={dirtyCount}
+        saving={saving}
+        onSave={() => void handleSave()}
+        onDiscard={handleDiscard}
+        onAddKey={() => setAddModalOpen(true)}
+        onManageLanguages={() => setAddLangModalOpen(true)}
       />
 
-      {/* Toolbar */}
-      <Box sx={{
-        px: 2, py: 1.5,
-        borderBottom: `1px solid ${borderColor}`,
-        display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap',
-        flexShrink: 0,
-        background: isDark ? '#1c1c1c' : '#fff',
-      }}>
-        <TextField
-          size="small"
-          placeholder={t.newKeyPlaceholder}
-          value={newKey}
-          onChange={e => setNewKey(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleAddKey(); }}
-          sx={{ width: 240, '& .MuiInputBase-input': { fontSize: '0.82rem' } }}
+      {selectedKeys.size > 0 && (
+        <SelectionToolbar
+          selectedCount={selectedKeys.size}
+          deletableCount={deletableSelected.length}
+          resettableCount={resettableSelected.length}
+          restorableCount={pendingSelected.length}
+          onDelete={handleBulkDelete}
+          onReset={handleBulkReset}
+          onRestore={handleBulkRestore}
+          onClear={() => setSelectedKeys(new Set())}
         />
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={handleAddKey}
-          disabled={!newKey.trim()}
-          sx={{ textTransform: 'none', fontFamily: "'IBM Plex Mono', monospace" }}
-        >
-          {t.addKey}
-        </Button>
+      )}
 
-        <Box sx={{ flex: 1 }} />
-
-        <TextField
-          size="small"
-          placeholder={t.filterPlaceholder}
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-          sx={{ width: 180, '& .MuiInputBase-input': { fontSize: '0.82rem' } }}
-        />
-
-        {isDirty && (
-          <Chip
-            label={`${dirtyCount} ${t.unsavedChanges}`}
-            size="small"
-            color="warning"
-            variant="outlined"
-          />
-        )}
-
-        <Badge badgeContent={isDirty ? dirtyCount : 0} color="warning" max={99}>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <SaveIcon />}
-            onClick={() => void handleSave()}
-            disabled={!isDirty || saving}
-            color="primary"
-            sx={{ textTransform: 'none', fontFamily: "'IBM Plex Mono', monospace", minWidth: 90 }}
-          >
-            {saving ? t.saving : t.save}
-          </Button>
-        </Badge>
-      </Box>
-
-      {/* Table */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         <table style={{
           borderCollapse: 'collapse',
           width: '100%',
           tableLayout: 'fixed',
-          minWidth: KEY_COL_WIDTH + cultures.length * VAL_COL_WIDTH + 56,
+          minWidth: CHECKBOX_COL_WIDTH + KEY_COL_WIDTH + visibleCultures.length * VAL_COL_WIDTH,
         }}>
-          {/* Header */}
           <thead>
             <tr>
+              <th style={{
+                width: CHECKBOX_COL_WIDTH,
+                padding: '4px 8px',
+                textAlign: 'center',
+                background: headerBg,
+                borderBottom: `1px solid ${borderColor}`,
+                borderRight: `1px solid ${borderColor}`,
+                position: 'sticky',
+                top: 0,
+                zIndex: 2,
+              }}>
+                <Checkbox
+                  size="small"
+                  checked={allVisibleSelected}
+                  indeterminate={someVisibleSelected && !allVisibleSelected}
+                  onChange={toggleSelectAll}
+                  disabled={filteredKeys.length === 0}
+                  sx={{ p: 0.25 }}
+                />
+              </th>
               <th style={{
                 width: KEY_COL_WIDTH,
                 padding: '8px 12px',
@@ -279,7 +392,7 @@ const TranslationsPage = () => {
               }}>
                 {t.key}
               </th>
-              {cultures.map(c => (
+              {visibleCultures.map(c => (
                 <th key={c.code} style={{
                   width: VAL_COL_WIDTH,
                   padding: '8px 12px',
@@ -296,31 +409,30 @@ const TranslationsPage = () => {
                   top: 0,
                   zIndex: 2,
                 }}>
-                  {c.code}{c.isDefault ? ' ★' : ''}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <CultureFlag code={c.code} />
+                    <span>{c.code}{c.isDefault ? ' ★' : ''}</span>
+                  </Box>
                 </th>
               ))}
-              <th style={{
-                width: 56,
-                background: headerBg,
-                borderBottom: `1px solid ${borderColor}`,
-                position: 'sticky',
-                top: 0,
-                zIndex: 2,
-              }} />
             </tr>
           </thead>
 
           <tbody>
             {filteredKeys.length === 0 && (
               <tr>
-                <td colSpan={cultures.length + 2} style={{ padding: '48px 24px', textAlign: 'center' }}>
+                <td colSpan={visibleCultures.length + 2} style={{ padding: '48px 24px', textAlign: 'center' }}>
                   {filter ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, color: theme.palette.text.secondary }}>
                       <SearchOffIcon sx={{ fontSize: 32, opacity: 0.4 }} />
                       <Typography sx={{ fontSize: '0.875rem' }}>No keys match &quot;{filter}&quot;</Typography>
-                      <Button size="small" onClick={() => setFilter('')} sx={{ textTransform: 'none', fontSize: '0.8rem' }}>
+                      <Typography
+                        component="span"
+                        onClick={() => setFilter('')}
+                        sx={{ fontSize: '0.8rem', color: theme.palette.primary.main, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                      >
                         {t.clearFilter}
-                      </Button>
+                      </Typography>
                     </Box>
                   ) : (
                     <Typography sx={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
@@ -331,9 +443,10 @@ const TranslationsPage = () => {
               </tr>
             )}
             {filteredKeys.map(key => {
-              const deleted = keysToDelete.has(key);
-              const dirty = isDirtyKey(key);
-              const rowBg = deleted ? deletedBg : dirty ? dirtyBg : undefined;
+              const deleted    = keysToDelete.has(key);
+              const resetting  = keysToReset.has(key);
+              const dirty      = isDirtyKey(key);
+              const rowBg = deleted ? deletedBg : resetting ? resetBg : dirty ? dirtyBg : undefined;
 
               return (
                 <tr
@@ -342,7 +455,21 @@ const TranslationsPage = () => {
                   onMouseEnter={e => { if (!rowBg) (e.currentTarget as HTMLTableRowElement).style.background = rowHover; }}
                   onMouseLeave={e => { if (!rowBg) (e.currentTarget as HTMLTableRowElement).style.background = ''; }}
                 >
-                  {/* Key cell */}
+                  <td style={{
+                    padding: '4px 8px',
+                    borderBottom: `1px solid ${borderColor}`,
+                    borderRight: `1px solid ${borderColor}`,
+                    verticalAlign: 'middle',
+                    textAlign: 'center',
+                    width: CHECKBOX_COL_WIDTH,
+                  }}>
+                    <Checkbox
+                      size="small"
+                      checked={selectedKeys.has(key)}
+                      onChange={() => toggleSelectKey(key)}
+                      sx={{ p: 0.25 }}
+                    />
+                  </td>
                   <td style={{
                     padding: '6px 12px',
                     borderBottom: `1px solid ${borderColor}`,
@@ -350,19 +477,20 @@ const TranslationsPage = () => {
                     verticalAlign: 'middle',
                     width: KEY_COL_WIDTH,
                   }}>
-                    <Typography sx={{
-                      fontSize: '0.78rem',
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      color: deleted ? theme.palette.error.main : theme.palette.text.primary,
-                      textDecoration: deleted ? 'line-through' : 'none',
-                      wordBreak: 'break-all',
-                    }}>
-                      {key}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography sx={{
+                        fontSize: '0.78rem',
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        color: deleted ? theme.palette.error.main : resetting ? theme.palette.info.main : theme.palette.text.primary,
+                        textDecoration: deleted ? 'line-through' : 'none',
+                        wordBreak: 'break-all',
+                      }}>
+                        {key}
+                      </Typography>
+                    </Box>
                   </td>
 
-                  {/* Value cells */}
-                  {cultures.map(c => {
+                  {visibleCultures.map(c => {
                     const val = localMap.get(key)?.get(c.code) ?? '';
                     const origVal = originalMap.get(key)?.get(c.code) ?? '';
                     const cellDirty = val !== origVal;
@@ -373,55 +501,42 @@ const TranslationsPage = () => {
                         borderBottom: `1px solid ${borderColor}`,
                         borderRight: `1px solid ${borderColor}`,
                         verticalAlign: 'top',
-                        background: cellDirty && !deleted ? (isDark ? '#2a2500' : '#fffbeb') : undefined,
+                        background: cellDirty && !deleted && !resetting ? (isDark ? '#2a2500' : '#fffbeb') : undefined,
                         width: VAL_COL_WIDTH,
                       }}>
-                        <TextField
-                          multiline
-                          maxRows={3}
-                          size="small"
-                          fullWidth
+                        <Box
+                          component="textarea"
                           value={val}
-                          disabled={deleted}
-                          onChange={e => handleCellChange(key, c.code, e.target.value)}
-                          variant="standard"
-                          slotProps={{ input: { disableUnderline: !cellDirty } }}
+                          disabled={deleted || resetting}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleCellChange(key, c.code, e.target.value)}
+                          rows={1}
                           sx={{
-                            '& .MuiInputBase-input': {
-                              fontSize: '0.8rem',
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              resize: 'none',
-                              color: deleted ? theme.palette.text.disabled : theme.palette.text.primary,
+                            width: '100%',
+                            border: 'none',
+                            outline: 'none',
+                            background: 'transparent',
+                            resize: 'none',
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: '0.8rem',
+                            color: deleted || resetting ? theme.palette.text.disabled : theme.palette.text.primary,
+                            p: 0.5,
+                            lineHeight: 1.5,
+                            overflow: 'hidden',
+                            cursor: deleted || resetting ? 'default' : 'text',
+                            '&:focus': {
+                              outline: `1px solid ${theme.palette.primary.main}`,
+                              borderRadius: '2px',
                             },
-                            '& .MuiInput-underline:before': { borderBottomColor: borderColor },
+                          }}
+                          onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                            const el = e.currentTarget;
+                            el.style.height = 'auto';
+                            el.style.height = `${el.scrollHeight}px`;
                           }}
                         />
                       </td>
                     );
                   })}
-
-                  {/* Actions */}
-                  <td style={{
-                    padding: '4px',
-                    borderBottom: `1px solid ${borderColor}`,
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    width: 56,
-                  }}>
-                    {deleted ? (
-                      <Tooltip title="Restore">
-                        <IconButton size="small" onClick={() => handleRestoreKey(key)} color="warning" sx={{ fontSize: 14 }}>
-                          ↩
-                        </IconButton>
-                      </Tooltip>
-                    ) : (
-                      <Tooltip title={t.deleteKey}>
-                        <IconButton size="small" onClick={() => handleDeleteKey(key)} color="error">
-                          <DeleteIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </td>
                 </tr>
               );
             })}
@@ -429,7 +544,20 @@ const TranslationsPage = () => {
         </table>
       </Box>
 
-      {/* Snackbar */}
+      <AddKeyModal
+        open={addModalOpen}
+        existingKeys={existingKeysSet}
+        onAdd={handleAddKey}
+        onClose={() => setAddModalOpen(false)}
+      />
+
+      <ManageLanguagesModal
+        open={addLangModalOpen}
+        cultures={cultures}
+        onChanged={() => void reload()}
+        onClose={() => setAddLangModalOpen(false)}
+      />
+
       <Snackbar
         open={snack.open}
         autoHideDuration={snack.open && snack.severity === 'success' ? 3000 : 8000}
