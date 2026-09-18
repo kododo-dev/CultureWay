@@ -3,7 +3,7 @@
 [![CI](https://github.com/kododo-dev/CultureWay/actions/workflows/ci.yml/badge.svg)](https://github.com/kododo-dev/CultureWay/actions/workflows/ci.yml)
 [![Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://kododo.dev/cultureway/demo)
 
-Runtime localization editor for ASP.NET Core. Edit translated strings in a built-in web UI and see the changes immediately — no rebuild, no restart. CultureWay plugs into the standard `IStringLocalizer` pipeline, so existing code keeps working.
+Runtime localization editor for ASP.NET Core. Translations are edited in a web UI built into your app and take effect immediately, without a rebuild or restart. Strings are resolved through the standard `IStringLocalizer`, so existing code keeps working.
 
 A live demo is available at [kododo.dev/cultureway/demo](https://kododo.dev/cultureway/demo).
 
@@ -15,50 +15,39 @@ A live demo is available at [kododo.dev/cultureway/demo](https://kododo.dev/cult
 
 ![Light theme with hidden languages](docs/screenshots/03-light-hidden-languages.png)
 
-## Features
-
-- **Web editor** embedded in your app (React SPA served from the host, no separate deployment).
-- **Standard API** — resolves through `IStringLocalizer` / `IStringLocalizerFactory` / `IStringLocalizer<T>`.
-- **Manage languages at runtime** — add, delete and change the default language from the UI; the choice is persisted by the store.
-- **Per-browser language visibility** — hide languages you are not working on; only the editor columns are affected and the choice is remembered in the browser.
-- **`.resx` as a read-only baseline** — surface existing resource files in the editor, override individual strings and reset them back to the `.resx` value.
-- **Pluggable persistence** — in-memory by default, PostgreSQL out of the box, or implement `IStore` yourself.
-- Targets `net8.0`, `net9.0` and `net10.0`.
-
 ## Packages
 
-| Package | Purpose |
+| Package | Description |
 |---|---|
-| `Kododo.CultureWay` | Core runtime: `AddCultureWay`, localizer, cache, in-memory store, `.resx` source |
-| `Kododo.CultureWay.UI` | Embedded web editor (`AddEditor`, `UseCultureWay`) |
-| `Kododo.CultureWay.PostgreSQL` | PostgreSQL persistence (`UsePostgreSQL`) |
-| `Kododo.CultureWay.Core` | Abstractions only (`IStore`, `IReadOnlySource`, `Translation`) for custom backends |
+| `Kododo.CultureWay` | Core DI registration, localizer, cache, in-memory store and `.resx` support |
+| `Kododo.CultureWay.Core` | Abstractions (`IStore`, `IReadOnlySource`, `Translation`) for custom backends |
+| `Kododo.CultureWay.UI` | Embedded web UI |
+| `Kododo.CultureWay.PostgreSQL` | PostgreSQL persistence store |
+
+Targets `net8.0`, `net9.0` and `net10.0`.
 
 ## Quick start
 
 ```bash
 dotnet add package Kododo.CultureWay.UI
-dotnet add package Kododo.CultureWay.PostgreSQL   # optional, otherwise data lives in memory
+dotnet add package Kododo.CultureWay.PostgreSQL  # optional, without it translations live in memory
 ```
 
 ```csharp
-builder.Services.AddLocalization(o => o.ResourcesPath = "Resources"); // only if you use .resx
-
 builder.Services.AddCultureWay(x =>
 {
     x.Options.SupportedCultures = ["en", "pl", "de"];
     x.Options.DefaultCulture = "en";
     x.AddEditor();
-    x.UseResources<SharedResources>();       // optional: .resx as read-only baseline
-    x.UsePostgreSQL(connectionString);       // optional: persist edits
+    x.UsePostgreSQL(connectionString);
 });
 
 var app = builder.Build();
 
-await app.InitializeCultureWayAsync();      // creates schema, loads cache, restores runtime languages
+await app.InitializeCultureWayAsync();
 
 app.UseRequestLocalization();
-app.UseCultureWay("/translations");          // editor at /translations
+app.UseCultureWay("/translations"); // mounts the UI at /translations
 ```
 
 Then use localization as usual:
@@ -67,39 +56,62 @@ Then use localization as usual:
 app.MapGet("/", (IStringLocalizer<Program> l) => l["App.Title"].Value);
 ```
 
-## Securing the editor
+`InitializeCultureWayAsync` creates the database schema, loads the translations into the cache and restores languages added at runtime.
 
-`UseCultureWay` returns a `RouteGroupBuilder`. **The editor is unauthenticated by default** and can change or delete your translations, so protect it before exposing the app:
+## Languages
+
+Languages can be added, deleted and set as default from the UI, and the store keeps them across restarts. Each browser can also hide languages it doesn't need. That only affects which columns the editor shows and is remembered in the browser's local storage.
+
+Cultures added at runtime are also registered in ASP.NET Core's `RequestLocalizationOptions`, so the request localization middleware picks them up without a restart.
+
+## `.resx` files
+
+Existing resource files can be shown in the editor as a read-only baseline:
+
+```csharp
+builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
+
+builder.Services.AddCultureWay(x =>
+{
+    x.UseResources<SharedResources>();
+});
+```
+
+`UseResources<T>()` uses the same naming convention as `IStringLocalizer<T>`. Keys are prefixed with the type name (`SharedResources.Title`). Pass `prefix: ""` to use the raw keys or any other string to choose your own.
+
+A key that comes from `.resx` can't be deleted. You can override its value, and later reset it to the value from the resource file.
+
+## Security
+
+The editor is not protected by default. Anyone who can reach the route can change or delete translations, so restrict it before exposing the app:
 
 ```csharp
 app.UseCultureWay("/translations").RequireAuthorization("Admin");
 ```
 
-## `.resx` files as a baseline
-
-`UseResources<T>()` surfaces the `.resx` files of `T` (same naming convention as `IStringLocalizer<T>`) in the editor.
-Keys coming from `.resx` cannot be deleted, only overridden or reset to their original value. Keys are prefixed with the type name (`{TypeName}.{key}`); pass `prefix: ""` to use the raw keys, or any string of your own.
-
 ## Custom store
 
-Implement `IStore` (from `Kododo.CultureWay.Core`) and register it before `AddCultureWay`. The culture-related members have default implementations, so a minimal store only needs `InitializeAsync`, `GetAllAsync`, `SetAsync` and `DeleteAsync`; override `GetSupportedCulturesAsync` / `AddSupportedCultureAsync` / `RemoveSupportedCultureAsync` / `GetDefaultCultureAsync` / `SetDefaultCultureAsync` to keep runtime language changes across restarts.
+Implement `IStore` from `Kododo.CultureWay.Core` and register it before `AddCultureWay`. A minimal store needs `InitializeAsync`, `GetAllAsync`, `SetAsync` and `DeleteAsync`.
 
-## Demo
+The members that deal with languages (`GetSupportedCulturesAsync`, `AddSupportedCultureAsync`, `RemoveSupportedCultureAsync`, `GetDefaultCultureAsync`, `SetDefaultCultureAsync`) have default implementations that do nothing. Override them if you want languages changed in the UI to survive a restart.
 
-A runnable sample lives in `src/CultureWay.Demo.Web`:
+## Running the demo
 
 ```bash
+cd src/CultureWay.UI/SPA && npm ci && npm run build
+cd ../../..
 dotnet run --project src/CultureWay.Demo.Web --framework net10.0
 ```
 
-The SPA must be built first (`cd src/CultureWay.UI/SPA && npm ci && npm run build`).
+Without a `DemoDB` connection string the demo uses the in-memory store.
 
 ## Building from source
 
 ```bash
 cd src/CultureWay.UI/SPA && npm ci && npm run build
-cd ../../.. && dotnet test src/CultureWay.Tests
-dotnet test src/CultureWay.PostgreSQL.Tests   # requires Docker (Testcontainers)
+cd ../../..
+dotnet test src/CultureWay.Tests
+dotnet test src/CultureWay.PostgreSQL.Tests  # needs Docker (Testcontainers)
 ```
 
 ## License
