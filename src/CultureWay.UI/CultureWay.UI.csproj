@@ -43,4 +43,10 @@
         <Version>1.0.0-local</Version>
     </PropertyGroup>
 
+    <!-- Fail packing instead of silently shipping a UI package without the embedded SPA. -->
+    <Target Name="EnsureSpaBuilt" BeforeTargets="Pack">
+        <Error Condition="!Exists('$(MSBuildProjectDirectory)/SPA/dist/index.html')"
+               Text="SPA\dist\index.html is missing. Run 'npm ci &amp;&amp; npm run build' in src/CultureWay.UI/SPA before packing." />
+    </Target>
+
 </Project>
