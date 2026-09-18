@@ -14,7 +14,7 @@ public class GetTranslationsHandlerTests
     {
         var store = Substitute.For<IStore>();
         store.GetAllAsync().Returns(new List<Translation>());
-        var handler = new GetTranslationsHandler(store);
+        var handler = new GetTranslationsHandler(store, []);
 
         var result = await handler.HandleAsync(new GetTranslations(), CancellationToken.None);
 
@@ -30,7 +30,7 @@ public class GetTranslationsHandlerTests
             new("Hello", "en", "Hello World"),
             new("Hello", "pl", "Witaj Świecie"),
         });
-        var handler = new GetTranslationsHandler(store);
+        var handler = new GetTranslationsHandler(store, []);
 
         var result = await handler.HandleAsync(new GetTranslations(), CancellationToken.None);
 
@@ -50,7 +50,7 @@ public class GetTranslationsHandlerTests
             new("Apple", "pl", "a-pl"),
             new("Banana", "en", "b-en"),
         });
-        var handler = new GetTranslationsHandler(store);
+        var handler = new GetTranslationsHandler(store, []);
 
         var result = await handler.HandleAsync(new GetTranslations(), CancellationToken.None);
 
@@ -71,7 +71,7 @@ public class GetTranslationsHandlerTests
             new("apple", "en", "1"),
             new("Apple", "en", "2"),
         });
-        var handler = new GetTranslationsHandler(store);
+        var handler = new GetTranslationsHandler(store, []);
 
         var result = await handler.HandleAsync(new GetTranslations(), CancellationToken.None);
 

@@ -6,7 +6,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Npgsql" Version="10.0.2" />
+        <PackageReference Include="Npgsql" />
     </ItemGroup>
 
     <ItemGroup>
@@ -23,6 +23,7 @@
     <PropertyGroup>
         <Description>PostgreSQL persistence store for CultureWay. Retains localized strings across application restarts using a single auto-managed database table.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>localization;i18n;translations;postgresql;npgsql;aspnetcore</PackageTags>
         <RepositoryUrl>https://github.com/kododo-dev/CultureWay</RepositoryUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageIcon>logo.png</PackageIcon>

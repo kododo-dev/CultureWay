@@ -1,4 +1,5 @@
 using Kododo.Reiho.AspNetCore.API;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Kododo.CultureWay.UI;
 
@@ -14,6 +15,10 @@ public static class CultureWayConfigurationExtensions
     /// </summary>
     public static ICultureWayConfiguration AddEditor(this ICultureWayConfiguration configuration)
     {
+        // Guarantees IOptions<RequestLocalizationOptions> resolves (as a harmless default
+        // instance) even for hosts that never call AddRequestLocalization themselves, so
+        // AddCultureHandler can always sync newly-added cultures into it.
+        configuration.Services.AddOptions();
         configuration.Services.AddRequestHandlers(typeof(CultureWayConfigurationExtensions).Assembly);
         return configuration;
     }

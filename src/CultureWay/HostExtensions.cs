@@ -20,5 +20,18 @@ public static class HostExtensions
         var translations = await store.GetAllAsync(cancellationToken);
         var cache = host.Services.GetRequiredService<TranslationCache>();
         cache.Load(translations);
+
+        var options = scope.ServiceProvider.GetRequiredService<CultureWayOptions>();
+
+        var persistedCultures = await store.GetSupportedCulturesAsync(cancellationToken);
+        if (persistedCultures.Count > 0)
+        {
+            var missing = persistedCultures.Where(c => !options.SupportedCultures.Contains(c, StringComparer.OrdinalIgnoreCase));
+            options.SupportedCultures = [.. options.SupportedCultures, .. missing];
+        }
+
+        var persistedDefaultCulture = await store.GetDefaultCultureAsync(cancellationToken);
+        if (persistedDefaultCulture is not null)
+            options.DefaultCulture = persistedDefaultCulture;
     }
 }

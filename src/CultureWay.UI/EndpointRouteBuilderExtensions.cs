@@ -1,7 +1,10 @@
 using Kododo.Reiho.AspNetCore.API;
 using Kododo.Reiho.AspNetCore.SPA;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Kododo.CultureWay.UI;
 
@@ -23,6 +26,12 @@ public static class EndpointRouteBuilderExtensions
         /// A <see cref="RouteGroupBuilder"/> that can be used to apply additional
         /// middleware such as authentication or authorization policies.
         /// </returns>
+        /// <remarks>
+        /// Call this after <see cref="HostExtensions.InitializeCultureWayAsync"/> so that any
+        /// supported cultures persisted by the store in a previous run are synced into
+        /// ASP.NET Core's <see cref="RequestLocalizationOptions"/> (if configured) before the
+        /// app starts serving requests.
+        /// </remarks>
         /// <example>
         /// <code>
         /// app.UseCultureWay("/translations").RequireAuthorization("Admin");
@@ -33,6 +42,12 @@ public static class EndpointRouteBuilderExtensions
             var group = endpoints.MapGroup(path);
             group.MapApi();
             group.MapEmbeddedSpa(typeof(EndpointRouteBuilderExtensions).Assembly);
+
+            var cultureWayOptions = endpoints.ServiceProvider.GetService<CultureWayOptions>();
+            var requestLocalizationOptions = endpoints.ServiceProvider.GetService<IOptions<RequestLocalizationOptions>>();
+            if (cultureWayOptions is not null && requestLocalizationOptions is not null)
+                RequestLocalizationSync.Sync(requestLocalizationOptions.Value, cultureWayOptions.SupportedCultures);
+
             return group;
         }
 

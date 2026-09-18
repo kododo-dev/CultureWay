@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="App.Title" xml:space="preserve">
+    <value>CultureWay Demo (built-in)</value>
+  </data>
+
+  <data name="Common.Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common.Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Common.Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Common.Confirm" xml:space="preserve">
+    <value>Are you sure?</value>
+  </data>
+
+  <data name="Validation.Required" xml:space="preserve">
+    <value>This field is required.</value>
+  </data>
+  <data name="Validation.Email" xml:space="preserve">
+    <value>Invalid email address.</value>
+  </data>
+  <data name="Validation.MinLength" xml:space="preserve">
+    <value>Must be at least {0} characters.</value>
+  </data>
+  <data name="Validation.MaxLength" xml:space="preserve">
+    <value>Must be at most {0} characters.</value>
+  </data>
+</root>

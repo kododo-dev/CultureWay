@@ -159,4 +159,127 @@ public class InMemoryStoreTests
         var act = async () => await _store.InitializeAsync();
         await act.Should().NotThrowAsync();
     }
+
+    [Fact]
+    public async Task GetSupportedCultures_WhenEmpty_ReturnsEmptyList()
+    {
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetSupportedCultures_AfterAdd_ReturnsAddedCulture()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+
+        var result = await _store.GetSupportedCulturesAsync();
+
+        result.Should().ContainSingle().Which.Should().Be("fr");
+    }
+
+    [Fact]
+    public async Task AddSupportedCulture_AddedTwice_NoDuplicates()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+        await _store.AddSupportedCultureAsync("fr");
+
+        var result = await _store.GetSupportedCulturesAsync();
+
+        result.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task AddSupportedCulture_DifferentCasing_TreatedAsDuplicate()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+        await _store.AddSupportedCultureAsync("FR");
+
+        var result = await _store.GetSupportedCulturesAsync();
+
+        result.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task AddSupportedCulture_MultipleDifferentCultures_AllStored()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+        await _store.AddSupportedCultureAsync("it");
+        await _store.AddSupportedCultureAsync("es");
+
+        var result = await _store.GetSupportedCulturesAsync();
+
+        result.Should().BeEquivalentTo(["fr", "it", "es"]);
+    }
+
+    [Fact]
+    public async Task RemoveSupportedCulture_ExistingCulture_RemovesIt()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+
+        await _store.RemoveSupportedCultureAsync("fr");
+
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task RemoveSupportedCulture_NonExistingCulture_SilentlyIgnored()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+
+        var act = async () => await _store.RemoveSupportedCultureAsync("it");
+        await act.Should().NotThrowAsync();
+
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task RemoveSupportedCulture_DifferentCasing_StillRemoves()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+
+        await _store.RemoveSupportedCultureAsync("FR");
+
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task RemoveSupportedCulture_OneOfSeveral_OthersRemain()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+        await _store.AddSupportedCultureAsync("it");
+
+        await _store.RemoveSupportedCultureAsync("fr");
+
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().ContainSingle().Which.Should().Be("it");
+    }
+
+    [Fact]
+    public async Task GetDefaultCulture_WhenNotSet_ReturnsNull()
+    {
+        var result = await _store.GetDefaultCultureAsync();
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetDefaultCulture_AfterSet_ReturnsSetCulture()
+    {
+        await _store.SetDefaultCultureAsync("pl");
+
+        var result = await _store.GetDefaultCultureAsync();
+        result.Should().Be("pl");
+    }
+
+    [Fact]
+    public async Task SetDefaultCulture_CalledAgain_OverwritesPreviousValue()
+    {
+        await _store.SetDefaultCultureAsync("pl");
+        await _store.SetDefaultCultureAsync("de");
+
+        var result = await _store.GetDefaultCultureAsync();
+        result.Should().Be("de");
+    }
 }

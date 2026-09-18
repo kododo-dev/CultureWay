@@ -1,9 +1,15 @@
 <Solution>
+  <Folder Name="/Demo/">
+    <Project Path="CultureWay.Demo.Web/CultureWay.Demo.Web.csproj" />
+  </Folder>
+  <Folder Name="/Externals/">
+    <Project Path="CultureWay.PostgreSQL/CultureWay.PostgreSQL.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="CultureWay.PostgreSQL.Tests/CultureWay.PostgreSQL.Tests.csproj" />
+    <Project Path="CultureWay.Tests/CultureWay.Tests.csproj" />
+  </Folder>
   <Project Path="CultureWay.Core/CultureWay.Core.csproj" />
-  <Project Path="CultureWay.Demo.Web/CultureWay.Demo.Web.csproj" />
-  <Project Path="CultureWay.PostgreSQL.Tests/CultureWay.PostgreSQL.Tests.csproj" />
-  <Project Path="CultureWay.PostgreSQL/CultureWay.PostgreSQL.csproj" />
-  <Project Path="CultureWay.Tests/CultureWay.Tests.csproj" />
   <Project Path="CultureWay.UI/CultureWay.UI.csproj" />
   <Project Path="CultureWay/CultureWay.csproj" />
 </Solution>

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using Microsoft.Extensions.Localization;
 
@@ -5,25 +6,25 @@ namespace Kododo.CultureWay.Demo.Web;
 
 static class HomeView
 {
-    private static readonly (string Code, string Label)[] Cultures =
-    [
-        ("en", "English"),
-        ("pl", "Polski"),
-        ("de", "Deutsch"),
-    ];
-
-    public static string Render(string basePath, IStringLocalizer localizer, string currentCulture)
+    public static string Render(
+        string basePath,
+        IStringLocalizer localizer,
+        string currentCulture,
+        IReadOnlyList<string> supportedCultures)
     {
         string L(string key) => WebUtility.HtmlEncode(localizer[key].Value);
 
-        var cultureSwitcher = string.Concat(Cultures.Select(c =>
+        var cultureOptions = string.Concat(supportedCultures.Select(code =>
         {
-            var active = string.Equals(c.Code, currentCulture, StringComparison.OrdinalIgnoreCase);
-            var style  = active
-                ? "background:#2563eb;color:#fff;border-color:#2563eb"
-                : "background:#fff;color:#374151;border-color:#d1d5db";
-            return $"<a href='?culture={c.Code}' style='padding:6px 14px;border-radius:6px;border:1px solid;font-size:.85rem;font-weight:500;text-decoration:none;{style}'>{c.Label}</a>";
+            var selected = string.Equals(code, currentCulture, StringComparison.OrdinalIgnoreCase) ? " selected" : "";
+            return $"<option value='{WebUtility.HtmlEncode(code)}'{selected}>{WebUtility.HtmlEncode(NativeLabel(code))}</option>";
         }));
+
+        var cultureSwitcher = $"""
+            <select class="culture-select" onchange="location.href='?culture='+this.value">
+              {cultureOptions}
+            </select>
+            """;
 
         static string Feature(string title, string desc, string icon) => $"""
             <div class="card">
@@ -50,6 +51,8 @@ static class HomeView
                 .topbar-link:hover{color:#111827}
                 .culture-bar{background:#f3f4f6;border-bottom:1px solid #e5e7eb;padding:8px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
                 .culture-label{font-size:.8rem;color:#6b7280;margin-right:4px}
+                .culture-select{padding:6px 12px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:.85rem;font-weight:500;cursor:pointer}
+                .culture-select:focus{outline:2px solid #2563eb;outline-offset:1px}
                 .hero{padding:72px 24px 64px;text-align:center;background:#fff;border-bottom:1px solid #e5e7eb}
                 .hero h1{font-size:2.25rem;font-weight:800;letter-spacing:-.02em;margin-bottom:16px;line-height:1.2}
                 .hero p{color:#6b7280;font-size:1.1rem;max-width:580px;margin:0 auto 32px;line-height:1.6}
@@ -100,5 +103,17 @@ static class HomeView
             </body>
             </html>
             """;
+    }
+
+    private static string NativeLabel(string code)
+    {
+        try
+        {
+            return CultureInfo.GetCultureInfo(code).NativeName;
+        }
+        catch (CultureNotFoundException)
+        {
+            return code;
+        }
     }
 }

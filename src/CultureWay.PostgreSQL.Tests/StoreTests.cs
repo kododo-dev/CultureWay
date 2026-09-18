@@ -224,6 +224,136 @@ public class StoreTests : IAsyncLifetime
         var result = await _store.GetAllAsync();
         result.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task InitializeAsync_CreatesCulturesTable()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().ContainSingle(c => c == "fr");
+    }
+
+    [Fact]
+    public async Task InitializeAsync_CalledTwice_CulturesTableIsIdempotent()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+        await _store.InitializeAsync();
+
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().ContainSingle(c => c == "fr");
+    }
+
+    [Fact]
+    public async Task GetSupportedCultures_WhenTableIsEmpty_ReturnsEmptyList()
+    {
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AddSupportedCulture_AddedTwice_DoesNotDuplicate()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+        await _store.AddSupportedCultureAsync("fr");
+
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task AddSupportedCulture_DataPersistedAcrossStoreInstances()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+
+        var freshStore = new Store(_fixture.ConnectionString);
+        await freshStore.InitializeAsync();
+
+        var result = await freshStore.GetSupportedCulturesAsync();
+        result.Should().Contain("fr");
+    }
+
+    [Fact]
+    public async Task RemoveSupportedCulture_ExistingCulture_RemovesIt()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+
+        await _store.RemoveSupportedCultureAsync("fr");
+
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task RemoveSupportedCulture_NonExistingCulture_SilentlyIgnored()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+
+        var act = async () => await _store.RemoveSupportedCultureAsync("it");
+        await act.Should().NotThrowAsync();
+
+        var result = await _store.GetSupportedCulturesAsync();
+        result.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task RemoveSupportedCulture_RemovalPersistedAcrossStoreInstances()
+    {
+        await _store.AddSupportedCultureAsync("fr");
+        await _store.RemoveSupportedCultureAsync("fr");
+
+        var freshStore = new Store(_fixture.ConnectionString);
+        await freshStore.InitializeAsync();
+
+        var result = await freshStore.GetSupportedCulturesAsync();
+        result.Should().NotContain("fr");
+    }
+
+    [Fact]
+    public async Task InitializeAsync_CreatesSettingsTable()
+    {
+        await _store.SetDefaultCultureAsync("pl");
+        var result = await _store.GetDefaultCultureAsync();
+        result.Should().Be("pl");
+    }
+
+    [Fact]
+    public async Task InitializeAsync_CalledTwice_SettingsTableIsIdempotent()
+    {
+        await _store.SetDefaultCultureAsync("pl");
+        await _store.InitializeAsync();
+
+        var result = await _store.GetDefaultCultureAsync();
+        result.Should().Be("pl");
+    }
+
+    [Fact]
+    public async Task GetDefaultCulture_WhenNotSet_ReturnsNull()
+    {
+        var result = await _store.GetDefaultCultureAsync();
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SetDefaultCulture_CalledAgain_OverwritesPreviousValue()
+    {
+        await _store.SetDefaultCultureAsync("pl");
+        await _store.SetDefaultCultureAsync("de");
+
+        var result = await _store.GetDefaultCultureAsync();
+        result.Should().Be("de");
+    }
+
+    [Fact]
+    public async Task SetDefaultCulture_DataPersistedAcrossStoreInstances()
+    {
+        await _store.SetDefaultCultureAsync("pl");
+
+        var freshStore = new Store(_fixture.ConnectionString);
+        await freshStore.InitializeAsync();
+
+        var result = await freshStore.GetDefaultCultureAsync();
+        result.Should().Be("pl");
+    }
 }
 
 [CollectionDefinition("PostgreSQL")]

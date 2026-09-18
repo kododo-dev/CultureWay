@@ -11,11 +11,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DemoDB");
 
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
 builder.Services.AddCultureWay(x =>
 {
     x.Options.SupportedCultures = ["pl", "en", "de"];
     x.Options.DefaultCulture = "en";
     x.AddEditor();
+    // Surfaces Resources/DemoResources*.resx as read-only baseline translations — no custom
+    // IReadOnlySource needed. Empty prefix keeps the existing "App.Title" style keys unprefixed.
+    x.UseResources<DemoResources>(prefix: "");
     if (connectionString is not null)
         x.UsePostgreSQL(connectionString);
 });
@@ -43,10 +48,11 @@ await SeedIfEmptyAsync(app);
 
 app.UseRequestLocalization();
 
-app.MapGet("/", (IStringLocalizer<Program> localizer, IRequestCultureFeature? culture) =>
+app.MapGet("/", (IStringLocalizer<Program> localizer, HttpContext ctx, CultureWayOptions options) =>
 {
+    var culture = ctx.Features.Get<IRequestCultureFeature>();
     var currentCulture = culture?.RequestCulture.UICulture.Name ?? "en";
-    var html = HomeView.Render(pathBase, localizer, currentCulture);
+    var html = HomeView.Render(pathBase, localizer, currentCulture, options.SupportedCultures);
     return Results.Content(html, "text/html");
 });
 

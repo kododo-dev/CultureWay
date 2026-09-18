@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.7" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Localization" />
     </ItemGroup>
 
     <ItemGroup>
@@ -29,6 +29,7 @@
     <PropertyGroup>
         <Description>Runtime localization editor for ASP.NET Core. Persist and edit translated strings through a built-in web UI without restarting the application.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>localization;localisation;i18n;translations;aspnetcore;IStringLocalizer;resx</PackageTags>
         <RepositoryUrl>https://github.com/kododo-dev/CultureWay</RepositoryUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageReadmeFile>README.md</PackageReadmeFile>

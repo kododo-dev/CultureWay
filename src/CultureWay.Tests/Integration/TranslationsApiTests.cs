@@ -80,6 +80,148 @@ public class TranslationsApiTests : IAsyncLifetime
                 .Should().AllSatisfy(c => c.IsDefault.Should().BeFalse());
     }
 
+    // ── AddCulture ─────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AddCulture_ValidCode_Returns200WithEmptyErrors()
+    {
+        var response = await PostAddCulture("fr");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AddCulture_ValidCode_AppearsInGetCultures()
+    {
+        await PostAddCulture("fr");
+
+        var cultures = await FetchCultures();
+
+        cultures.Select(c => c.Code).Should().Contain("fr");
+    }
+
+    [Fact]
+    public async Task AddCulture_AfterAdd_CanSaveTranslationInNewCulture()
+    {
+        await PostAddCulture("fr");
+
+        var response = await PostUpdate(translations: [("Key", "fr", "Bonjour")]);
+
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AddCulture_DuplicateCode_ReturnsValidationError()
+    {
+        var response = await PostAddCulture("en");
+
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task AddCulture_InvalidCode_ReturnsValidationError()
+    {
+        var response = await PostAddCulture("not-a-culture-!!");
+
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().ContainSingle();
+    }
+
+    // ── DeleteCulture ──────────────────────────────────────────────────
+
+    [Fact]
+    public async Task DeleteCulture_NonDefaultCulture_Returns200WithEmptyErrors()
+    {
+        await PostAddCulture("fr");
+
+        var response = await PostDeleteCulture("fr");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteCulture_NonDefaultCulture_RemovedFromGetCultures()
+    {
+        await PostAddCulture("fr");
+
+        await PostDeleteCulture("fr");
+
+        var cultures = await FetchCultures();
+        cultures.Select(c => c.Code).Should().NotContain("fr");
+    }
+
+    [Fact]
+    public async Task DeleteCulture_WithExistingTranslations_TranslationsAreRemoved()
+    {
+        await PostAddCulture("fr");
+        await PostUpdate(translations: [("Key", "fr", "Bonjour"), ("Key", "en", "Hello")]);
+
+        await PostDeleteCulture("fr");
+
+        var translations = await FetchTranslations();
+        translations.Should().NotContain(t => t.Culture == "fr");
+        translations.Should().Contain(t => t.Culture == "en");
+    }
+
+    [Fact]
+    public async Task DeleteCulture_DefaultCulture_ReturnsValidationError()
+    {
+        var response = await PostDeleteCulture("en");
+
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().ContainSingle();
+
+        var cultures = await FetchCultures();
+        cultures.Select(c => c.Code).Should().Contain("en");
+    }
+
+    [Fact]
+    public async Task DeleteCulture_UnsupportedCulture_ReturnsValidationError()
+    {
+        var response = await PostDeleteCulture("fr");
+
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().ContainSingle();
+    }
+
+    // ── SetDefaultCulture ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task SetDefaultCulture_SupportedCulture_Returns200WithEmptyErrors()
+    {
+        var response = await PostSetDefaultCulture("pl");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SetDefaultCulture_SupportedCulture_UpdatesGetCultures()
+    {
+        await PostSetDefaultCulture("pl");
+
+        var cultures = await FetchCultures();
+
+        cultures.Single(c => c.Code == "pl").IsDefault.Should().BeTrue();
+        cultures.Single(c => c.Code == "en").IsDefault.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SetDefaultCulture_UnsupportedCulture_ReturnsValidationError()
+    {
+        var response = await PostSetDefaultCulture("fr");
+
+        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        errors.Should().ContainSingle();
+    }
+
     // ── GetTranslations ────────────────────────────────────────────────
 
     [Fact]
@@ -275,6 +417,30 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await _client.PostAsJsonAsync("/translations/api/GetCultures", new { });
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<CultureResponse[]>(JsonOpts))!;
+    }
+
+    private Task<HttpResponseMessage> PostAddCulture(string culture)
+    {
+        var json = JsonSerializer.Serialize(new { Culture = culture }, JsonOpts);
+        return _client.PostAsync(
+            "/translations/api/AddCulture",
+            new StringContent(json, Encoding.UTF8, "application/json"));
+    }
+
+    private Task<HttpResponseMessage> PostDeleteCulture(string culture)
+    {
+        var json = JsonSerializer.Serialize(new { Culture = culture }, JsonOpts);
+        return _client.PostAsync(
+            "/translations/api/DeleteCulture",
+            new StringContent(json, Encoding.UTF8, "application/json"));
+    }
+
+    private Task<HttpResponseMessage> PostSetDefaultCulture(string culture)
+    {
+        var json = JsonSerializer.Serialize(new { Culture = culture }, JsonOpts);
+        return _client.PostAsync(
+            "/translations/api/SetDefaultCulture",
+            new StringContent(json, Encoding.UTF8, "application/json"));
     }
 
     private Task<HttpResponseMessage> PostUpdate(

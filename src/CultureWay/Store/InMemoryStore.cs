@@ -7,6 +7,8 @@ namespace Kododo.CultureWay.Store;
 internal sealed class InMemoryStore : IStore
 {
     private readonly ConcurrentDictionary<(string Key, string Culture), Translation> _store = new();
+    private readonly ConcurrentDictionary<string, byte> _cultures = new(StringComparer.OrdinalIgnoreCase);
+    private string? _defaultCulture;
 
     public Task InitializeAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
@@ -26,6 +28,30 @@ internal sealed class InMemoryStore : IStore
         foreach (var key in keys)
             _store.TryRemove(key, out _);
 
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<string>> GetSupportedCulturesAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlyList<string>>(_cultures.Keys.ToList());
+
+    public Task AddSupportedCultureAsync(string culture, CancellationToken cancellationToken = default)
+    {
+        _cultures[culture] = 0;
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveSupportedCultureAsync(string culture, CancellationToken cancellationToken = default)
+    {
+        _cultures.TryRemove(culture, out _);
+        return Task.CompletedTask;
+    }
+
+    public Task<string?> GetDefaultCultureAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(_defaultCulture);
+
+    public Task SetDefaultCultureAsync(string culture, CancellationToken cancellationToken = default)
+    {
+        _defaultCulture = culture;
         return Task.CompletedTask;
     }
 }

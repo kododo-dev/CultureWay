@@ -13,8 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Kododo.Reiho.AspNetCore" Version="1.0.0" />
-        <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="8.0.26" />
+        <PackageReference Include="Kododo.Reiho.AspNetCore" />
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" />
     </ItemGroup>
 
     <ItemGroup>
@@ -35,6 +35,7 @@
     <PropertyGroup>
         <Description>Embedded web UI for CultureWay. Adds a React-based localization editor served directly from the host application — no separate deployment required.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>localization;i18n;translations;editor;web-ui;aspnetcore;react</PackageTags>
         <RepositoryUrl>https://github.com/kododo-dev/CultureWay</RepositoryUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageIcon>logo.png</PackageIcon>

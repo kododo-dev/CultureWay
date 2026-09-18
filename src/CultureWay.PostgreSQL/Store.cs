@@ -1,7 +1,6 @@
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Core.Store;
 using Npgsql;
-using NpgsqlTypes;
 
 namespace Kododo.CultureWay.PostgreSQL;
 
@@ -9,12 +8,17 @@ internal sealed class Store(string connectionString) : IStore
 {
     private const string Schema = "cultureway";
     private const string Table = "translations";
+    private const string CulturesTable = "cultures";
+    private const string SettingsTable = "settings";
+    private const string DefaultCultureSettingKey = "default_culture";
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await using var conn = await OpenAsync(cancellationToken);
         await EnsureSchemaAsync(conn, cancellationToken);
         await EnsureTableAsync(conn, cancellationToken);
+        await EnsureCulturesTableAsync(conn, cancellationToken);
+        await EnsureSettingsTableAsync(conn, cancellationToken);
     }
 
     public async Task<IReadOnlyList<Translation>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -38,39 +42,27 @@ internal sealed class Store(string connectionString) : IStore
         if (translations.Count == 0)
             return;
 
+        // Last write wins per (key, culture), matching a sequential upsert loop — and avoids
+        // Postgres' "ON CONFLICT DO UPDATE command cannot affect row a second time" error.
+        var deduplicated = translations
+            .GroupBy(t => (t.Key, t.Culture))
+            .Select(g => g.Last())
+            .ToArray();
+
         await using var conn = await OpenAsync(cancellationToken);
-        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
 
-        try
-        {
-            var sql = $"""
-                       INSERT INTO {Schema}.{Table} (key, culture, value)
-                       VALUES (@key, @culture, @value)
-                       ON CONFLICT (key, culture) DO UPDATE
-                           SET value = EXCLUDED.value;
-                       """;
+        var sql = $"""
+                   INSERT INTO {Schema}.{Table} (key, culture, value)
+                   SELECT * FROM UNNEST(@keys::text[], @cultures::text[], @values::text[])
+                   ON CONFLICT (key, culture) DO UPDATE
+                       SET value = EXCLUDED.value;
+                   """;
 
-            await using var cmd = new NpgsqlCommand(sql, conn, tx);
-            var keyParam     = cmd.Parameters.Add(new NpgsqlParameter("key",     NpgsqlDbType.Text));
-            var cultureParam = cmd.Parameters.Add(new NpgsqlParameter("culture", NpgsqlDbType.Text));
-            var valueParam   = cmd.Parameters.Add(new NpgsqlParameter("value",   NpgsqlDbType.Text));
-            await cmd.PrepareAsync(cancellationToken);
-
-            foreach (var t in translations)
-            {
-                keyParam.Value     = t.Key;
-                cultureParam.Value = t.Culture;
-                valueParam.Value   = t.Value;
-                await cmd.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            await tx.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await tx.RollbackAsync(cancellationToken);
-            throw;
-        }
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("keys",     deduplicated.Select(t => t.Key).ToArray());
+        cmd.Parameters.AddWithValue("cultures", deduplicated.Select(t => t.Culture).ToArray());
+        cmd.Parameters.AddWithValue("values",   deduplicated.Select(t => t.Value).ToArray());
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(IReadOnlyCollection<(string Key, string Culture)> keys, CancellationToken cancellationToken = default)
@@ -93,6 +85,76 @@ internal sealed class Store(string connectionString) : IStore
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<string>> GetSupportedCulturesAsync(CancellationToken cancellationToken = default)
+    {
+        await using var conn = await OpenAsync(cancellationToken);
+
+        await using var cmd = new NpgsqlCommand(
+            $"SELECT code FROM {Schema}.{CulturesTable}", conn);
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        var results = new List<string>();
+
+        while (await reader.ReadAsync(cancellationToken))
+            results.Add(reader.GetString(0));
+
+        return results;
+    }
+
+    public async Task AddSupportedCultureAsync(string culture, CancellationToken cancellationToken = default)
+    {
+        await using var conn = await OpenAsync(cancellationToken);
+
+        var sql = $"""
+                   INSERT INTO {Schema}.{CulturesTable} (code)
+                   VALUES (@code)
+                   ON CONFLICT (code) DO NOTHING;
+                   """;
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("code", culture);
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task RemoveSupportedCultureAsync(string culture, CancellationToken cancellationToken = default)
+    {
+        await using var conn = await OpenAsync(cancellationToken);
+
+        await using var cmd = new NpgsqlCommand(
+            $"DELETE FROM {Schema}.{CulturesTable} WHERE code = @code", conn);
+        cmd.Parameters.AddWithValue("code", culture);
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<string?> GetDefaultCultureAsync(CancellationToken cancellationToken = default)
+    {
+        await using var conn = await OpenAsync(cancellationToken);
+
+        await using var cmd = new NpgsqlCommand(
+            $"SELECT value FROM {Schema}.{SettingsTable} WHERE key = @key", conn);
+        cmd.Parameters.AddWithValue("key", DefaultCultureSettingKey);
+
+        var result = await cmd.ExecuteScalarAsync(cancellationToken);
+        return result as string;
+    }
+
+    public async Task SetDefaultCultureAsync(string culture, CancellationToken cancellationToken = default)
+    {
+        await using var conn = await OpenAsync(cancellationToken);
+
+        var sql = $"""
+                   INSERT INTO {Schema}.{SettingsTable} (key, value)
+                   VALUES (@key, @value)
+                   ON CONFLICT (key) DO UPDATE
+                       SET value = EXCLUDED.value;
+                   """;
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("key", DefaultCultureSettingKey);
+        cmd.Parameters.AddWithValue("value", culture);
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     private static async Task EnsureSchemaAsync(NpgsqlConnection conn, CancellationToken ct)
     {
         await using var cmd = new NpgsqlCommand($"CREATE SCHEMA IF NOT EXISTS \"{Schema}\"", conn);
@@ -107,6 +169,33 @@ internal sealed class Store(string connectionString) : IStore
                        culture    TEXT NOT NULL,
                        value      TEXT NOT NULL,
                        CONSTRAINT pk_{Table} PRIMARY KEY (key, culture)
+                   );
+                   """;
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static async Task EnsureCulturesTableAsync(NpgsqlConnection conn, CancellationToken ct)
+    {
+        var sql = $"""
+                   CREATE TABLE IF NOT EXISTS {Schema}.{CulturesTable} (
+                       code TEXT NOT NULL,
+                       CONSTRAINT pk_{CulturesTable} PRIMARY KEY (code)
+                   );
+                   """;
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static async Task EnsureSettingsTableAsync(NpgsqlConnection conn, CancellationToken ct)
+    {
+        var sql = $"""
+                   CREATE TABLE IF NOT EXISTS {Schema}.{SettingsTable} (
+                       key   TEXT NOT NULL,
+                       value TEXT NOT NULL,
+                       CONSTRAINT pk_{SettingsTable} PRIMARY KEY (key)
                    );
                    """;
 
