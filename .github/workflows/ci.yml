@@ -22,11 +22,15 @@ jobs:
           cache: npm
           cache-dependency-path: src/CultureWay.UI/SPA/package-lock.json
 
-      - name: Build SPA
+      - name: Lint SPA
         working-directory: src/CultureWay.UI/SPA
         run: |
           npm ci
-          npm run build
+          npm run lint
+
+      - name: Build SPA
+        working-directory: src/CultureWay.UI/SPA
+        run: npm run build
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
