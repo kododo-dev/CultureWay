@@ -17,12 +17,12 @@ A live demo is available at [kododo.dev/cultureway/demo](https://kododo.dev/cult
 
 ## Packages
 
-| Package | Description |
-|---|---|
-| `Kododo.CultureWay` | Core DI registration, localizer, cache, in-memory store and `.resx` support |
-| `Kododo.CultureWay.Core` | Abstractions (`IStore`, `IReadOnlySource`, `Translation`) for custom backends |
-| `Kododo.CultureWay.UI` | Embedded web UI |
-| `Kododo.CultureWay.PostgreSQL` | PostgreSQL persistence store |
+| Package | NuGet | Description |
+|---|---|---|
+| `Kododo.CultureWay` | [![NuGet](https://img.shields.io/nuget/vpre/Kododo.CultureWay)](https://www.nuget.org/packages/Kododo.CultureWay) | Core DI registration, localizer, cache, in-memory store and `.resx` support |
+| `Kododo.CultureWay.Core` | [![NuGet](https://img.shields.io/nuget/vpre/Kododo.CultureWay.Core)](https://www.nuget.org/packages/Kododo.CultureWay.Core) | Abstractions (`IStore`, `IReadOnlySource`, `Translation`) for custom backends |
+| `Kododo.CultureWay.UI` | [![NuGet](https://img.shields.io/nuget/vpre/Kododo.CultureWay.UI)](https://www.nuget.org/packages/Kododo.CultureWay.UI) | Embedded web UI |
+| `Kododo.CultureWay.PostgreSQL` | [![NuGet](https://img.shields.io/nuget/vpre/Kododo.CultureWay.PostgreSQL)](https://www.nuget.org/packages/Kododo.CultureWay.PostgreSQL) | PostgreSQL persistence store |
 
 Targets `net8.0`, `net9.0` and `net10.0`.
 
