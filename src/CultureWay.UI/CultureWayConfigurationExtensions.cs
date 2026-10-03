@@ -14,11 +14,34 @@ public static class CultureWayConfigurationExtensions
     /// pipeline to mount the UI at a specific path.
     /// </summary>
     public static ICultureWayConfiguration AddEditor(this ICultureWayConfiguration configuration)
+        => configuration.AddEditor(_ => { });
+
+    /// <summary>
+    /// Enables the CultureWay translation editor and fits it into the host application's UI.
+    /// See <see cref="EditorOptions"/> for what can be set.
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// x.AddEditor(editor =>
+    /// {
+    ///     editor.Title = "My app";
+    ///     editor.CanManageCultures = ctx => ctx.User.IsInRole("Admin");
+    /// });
+    /// </code>
+    /// </example>
+    public static ICultureWayConfiguration AddEditor(
+        this ICultureWayConfiguration configuration,
+        Action<EditorOptions> configure)
     {
+        var editorOptions = new EditorOptions();
+        configure(editorOptions);
+
         // Guarantees IOptions<RequestLocalizationOptions> resolves (as a harmless default
         // instance) even for hosts that never call AddRequestLocalization themselves, so
         // AddCultureHandler can always sync newly-added cultures into it.
         configuration.Services.AddOptions();
+        configuration.Services.AddHttpContextAccessor();
+        configuration.Services.AddSingleton(editorOptions);
         configuration.Services.AddRequestHandlers(typeof(CultureWayConfigurationExtensions).Assembly);
         return configuration;
     }

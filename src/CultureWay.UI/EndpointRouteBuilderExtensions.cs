@@ -1,4 +1,8 @@
+using Kododo.CultureWay.UI.API.AddCulture;
+using Kododo.CultureWay.UI.API.DeleteCulture;
+using Kododo.CultureWay.UI.API.SetDefaultCulture;
 using Kododo.Reiho.AspNetCore.API;
+using Microsoft.AspNetCore.Http;
 using Kododo.Reiho.AspNetCore.SPA;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Localization;
@@ -54,7 +58,28 @@ public static class EndpointRouteBuilderExtensions
         private void MapApi()
         {
             var api = endpoints.MapGroup("/api");
+            api.AddEndpointFilter(RequireCultureManagement);
             api.MapRequests(typeof(EndpointRouteBuilderExtensions).Assembly);
         }
+    }
+
+    private static readonly HashSet<string> CultureManagementRequests =
+        new([nameof(AddCulture), nameof(DeleteCulture), nameof(SetDefaultCulture)], StringComparer.OrdinalIgnoreCase);
+
+    // Reiho maps each request at its type name, so the last path segment says which request this is.
+    private static async ValueTask<object?> RequireCultureManagement(
+        EndpointFilterInvocationContext context,
+        EndpointFilterDelegate next)
+    {
+        var http = context.HttpContext;
+        var request = http.Request.Path.Value?.Split('/').LastOrDefault();
+        if (request is not null && CultureManagementRequests.Contains(request))
+        {
+            var editorOptions = http.RequestServices.GetService<EditorOptions>();
+            if (editorOptions is not null && !editorOptions.AllowsCultureManagement(http))
+                return Results.StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        return await next(context);
     }
 }
