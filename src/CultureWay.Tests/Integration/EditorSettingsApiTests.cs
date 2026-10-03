@@ -75,7 +75,7 @@ public class EditorSettingsApiTests
             o.Title    = "Polyglot";
             o.HomeUrl  = "/";
             o.Language = "pl";
-            o.Links    = _ => [new EditorLink("Users", "/admin/users")];
+            o.Links    = _ => [new EditorLink("Users", "/admin/users") { Icon = EditorLinkIcons.Users }];
             o.User     = _ => new EditorUser("Ada") { AccountUrl = "/account", SignOutUrl = "/logout" };
         });
         var settings = await FetchSettings(app.GetTestClient());
@@ -83,7 +83,7 @@ public class EditorSettingsApiTests
         settings.Title.Should().Be("Polyglot");
         settings.HomeUrl.Should().Be("/");
         settings.Language.Should().Be("pl");
-        settings.Links.Should().ContainSingle().Which.Should().Be(new EditorLinkDto("Users", "/admin/users"));
+        settings.Links.Should().ContainSingle().Which.Should().Be(new EditorLinkDto("Users", "/admin/users", "users"));
         settings.User.Should().Be(new EditorUserDto("Ada", "/account", "/logout"));
     }
 

@@ -49,11 +49,29 @@ public sealed class EditorOptions
 }
 
 /// <summary>
-/// A link to a page of the host application.
+/// A link to a page of the host application. The link to the page the editor is on is highlighted.
 /// </summary>
 /// <param name="Label">The text of the link.</param>
 /// <param name="Url">Where it goes.</param>
-public sealed record EditorLink(string Label, string Url);
+public sealed record EditorLink(string Label, string Url)
+{
+    /// <summary>
+    /// The icon shown before the label: <see cref="EditorLinkIcons.Home"/>, <see cref="EditorLinkIcons.Translations"/>,
+    /// <see cref="EditorLinkIcons.Users"/> or <see cref="EditorLinkIcons.Key"/>. Any other value, or none, shows an arrow.
+    /// </summary>
+    public string? Icon { get; init; }
+}
+
+/// <summary>
+/// The icons an <see cref="EditorLink"/> can show.
+/// </summary>
+public static class EditorLinkIcons
+{
+    public const string Home = "home";
+    public const string Translations = "translations";
+    public const string Users = "users";
+    public const string Key = "key";
+}
 
 /// <summary>
 /// The signed-in user as the editor shows them.

@@ -13,7 +13,7 @@ internal sealed class GetEditorSettingsHandler(EditorOptions options, IHttpConte
             ?? throw new InvalidOperationException("GetEditorSettings must run inside an HTTP request.");
 
         var links = options.Links?.Invoke(context)
-            .Select(link => new EditorLinkDto(link.Label, link.Url))
+            .Select(link => new EditorLinkDto(link.Label, link.Url, link.Icon))
             .ToArray() ?? [];
 
         var user = options.User?.Invoke(context) is { } u

@@ -8,6 +8,6 @@ public record EditorSettingsDto(
     EditorUserDto? User,
     bool CanManageCultures);
 
-public record EditorLinkDto(string Label, string Url);
+public record EditorLinkDto(string Label, string Url, string? Icon);
 
 public record EditorUserDto(string Name, string? AccountUrl, string? SignOutUrl);

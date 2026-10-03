@@ -19,6 +19,7 @@ export interface TranslationKeyDto {
 export interface EditorLinkDto {
   label: string;
   url: string;
+  icon: string | null;
 }
 
 export interface EditorUserDto {

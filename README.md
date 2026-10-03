@@ -102,7 +102,7 @@ x.AddEditor(editor =>
     editor.HomeUrl  = "/";            // the title links here
     editor.Language = "pl";           // editor's own interface: en or pl; empty follows the browser
     editor.Links    = ctx => ctx.User.IsInRole("Admin")
-        ? [new EditorLink("Users", "/admin/users")]
+        ? [new EditorLink("Users", "/admin/users") { Icon = EditorLinkIcons.Users }]
         : [];
     editor.User     = ctx => ctx.User.Identity?.IsAuthenticated == true
         ? new EditorUser(ctx.User.Identity.Name!) { AccountUrl = "/account", SignOutUrl = "/logout" }
@@ -111,7 +111,7 @@ x.AddEditor(editor =>
 });
 ```
 
-The settings that take an `HttpContext` run on every request, so they can depend on who is signed in. Links and the user appear at the bottom of the side menu. The sign-out button submits a plain form POST to `SignOutUrl` without an antiforgery token, so that endpoint has to accept one.
+The settings that take an `HttpContext` run on every request, so they can depend on who is signed in. Links and the user appear at the bottom of the side menu. A link can show one of the icons in `EditorLinkIcons` (home, translations, users, key); without one it shows an arrow. The link to the page the editor is on is highlighted, so a host can list the editor itself among its own pages. The sign-out button submits a plain form POST to `SignOutUrl` without an antiforgery token, so that endpoint has to accept one.
 
 The editor also remembers the light or dark theme in `localStorage` under `cultureway.theme` (`light` or `dark`). Your own pages on the same origin can read that key to match it. When a request fails because the session expired (a 401, or a redirect to a sign-in page), the editor asks the user to sign in again in a new tab, so edits that were not saved stay on the page.
 

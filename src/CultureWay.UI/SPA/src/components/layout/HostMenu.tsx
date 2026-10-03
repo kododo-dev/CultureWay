@@ -10,12 +10,34 @@ import ListItemText from '@mui/material/ListItemText';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
+import TranslateIcon from '@mui/icons-material/Translate';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import { useTheme } from '@mui/material/styles';
 import { useEditorSettings } from '../../context/EditorSettingsContext.tsx';
 import { useI18n } from '../../i18n/I18nContext.tsx';
 import { MONO_FONT } from '../../utils/fonts.ts';
+
+const ICONS: Record<string, typeof ArrowOutwardIcon> = {
+  home: HomeOutlinedIcon,
+  translations: TranslateIcon,
+  users: PeopleOutlinedIcon,
+  key: KeyOutlinedIcon,
+};
+
+const trimSlash = (path: string) => path.replace(/\/+$/, '') || '/';
+
+// True when the link points at the page the editor is on, so it is shown as the current one.
+const isCurrent = (url: string) => {
+  try {
+    return trimSlash(new URL(url, document.baseURI).pathname) === trimSlash(window.location.pathname);
+  } catch {
+    return false;
+  }
+};
 
 // The host application's links and the signed-in user, at the bottom of the side menu.
 // Renders nothing when the host set neither.
@@ -33,19 +55,30 @@ const HostMenu = () => {
     <Box sx={{ flexShrink: 0, borderTop: `1px solid ${borderColor}` }}>
       {links.length > 0 && (
         <List dense disablePadding sx={{ py: 1 }}>
-          {links.map(link => (
-            <ListItem key={link.url} disablePadding>
-              <ListItemButton component="a" href={link.url}>
-                <ListItemIcon sx={{ color: mutedColor, minWidth: 32, '& svg': { fontSize: 16 } }}>
-                  <ArrowOutwardIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary={link.label}
-                  sx={{ '& .MuiListItemText-primary': { fontSize: '0.8rem', fontFamily: MONO_FONT, color: theme.palette.text.secondary } }}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          {links.map(link => {
+            const current = isCurrent(link.url);
+            const Icon = (link.icon && ICONS[link.icon]) || ArrowOutwardIcon;
+            return (
+              <ListItem key={link.url} disablePadding>
+                <ListItemButton component="a" href={link.url} selected={current} aria-current={current ? 'page' : undefined}>
+                  <ListItemIcon sx={{ color: current ? theme.palette.primary.main : mutedColor, minWidth: 32, '& svg': { fontSize: 16 } }}>
+                    <Icon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={link.label}
+                    sx={{
+                      '& .MuiListItemText-primary': {
+                        fontSize: '0.8rem',
+                        fontFamily: MONO_FONT,
+                        color: current ? theme.palette.text.primary : theme.palette.text.secondary,
+                        fontWeight: current ? 600 : 400,
+                      },
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
         </List>
       )}
 
