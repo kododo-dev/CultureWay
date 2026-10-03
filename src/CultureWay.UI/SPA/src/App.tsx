@@ -1,6 +1,7 @@
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { ThemeContextProvider, useThemeMode } from './context/ThemeContext.tsx';
 import { I18nProvider } from './i18n/I18nContext.tsx';
+import { EditorSettingsProvider } from './context/EditorSettingsContext.tsx';
 import { TranslationsProvider } from './context/TranslationsContext.tsx';
 import { NamespaceProvider } from './context/NamespaceContext.tsx';
 import MainLayout from './components/layout/MainLayout.tsx';
@@ -25,9 +26,11 @@ function AppInner() {
 function App() {
   return (
     <ThemeContextProvider>
-      <I18nProvider>
-        <AppInner />
-      </I18nProvider>
+      <EditorSettingsProvider>
+        <I18nProvider>
+          <AppInner />
+        </I18nProvider>
+      </EditorSettingsProvider>
     </ThemeContextProvider>
   );
 }

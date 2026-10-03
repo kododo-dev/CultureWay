@@ -25,6 +25,8 @@ import { useI18n } from '../../i18n/I18nContext.tsx';
 import { addCulture, deleteCulture, setDefaultCulture } from '../../api/api.ts';
 import type { CultureDto } from '../../api/api.model.ts';
 import CultureFlag from './CultureFlag.tsx';
+import { MONO_FONT } from '../../utils/fonts.ts';
+import { useEditorSettings } from '../../context/EditorSettingsContext.tsx';
 
 interface ManageLanguagesModalProps {
   open: boolean;
@@ -33,13 +35,14 @@ interface ManageLanguagesModalProps {
   onClose: () => void;
 }
 
-const MONO = { fontFamily: "'IBM Plex Mono', monospace" };
+const MONO = { fontFamily: MONO_FONT };
 
 const ManageLanguagesModal = ({ open, cultures, onChanged, onClose }: ManageLanguagesModalProps) => {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const { t } = useI18n();
   const { hiddenCultures, toggleCultureVisibility } = useTranslations();
+  const { canManageCultures } = useEditorSettings();
   const isDark = mode === 'dark';
 
   const [code, setCode] = useState('');
@@ -191,6 +194,8 @@ const ManageLanguagesModal = ({ open, cultures, onChanged, onClose }: ManageLang
                     <StarIcon sx={{ fontSize: 16, color: '#fbc02d' }} />
                   </Box>
                 </Tooltip>
+              ) : !canManageCultures ? (
+                <Box sx={{ p: 0.4, width: 16, boxSizing: 'content-box' }} />
               ) : (
                 <Tooltip title={t.setAsDefault}>
                   <span>
@@ -205,18 +210,20 @@ const ManageLanguagesModal = ({ open, cultures, onChanged, onClose }: ManageLang
                   </span>
                 </Tooltip>
               )}
-              <Tooltip title={t.deleteLanguage}>
-                <span>
-                  <IconButton
-                    size="small"
-                    disabled={c.isDefault || busyCode === c.code}
-                    onClick={() => void handleDelete(c.code)}
-                    sx={{ p: 0.4, color: theme.palette.text.disabled, '&:hover': { color: theme.palette.error.main } }}
-                  >
-                    <DeleteIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </span>
-              </Tooltip>
+              {canManageCultures && (
+                <Tooltip title={t.deleteLanguage}>
+                  <span>
+                    <IconButton
+                      size="small"
+                      disabled={c.isDefault || busyCode === c.code}
+                      onClick={() => void handleDelete(c.code)}
+                      sx={{ p: 0.4, color: theme.palette.text.disabled, '&:hover': { color: theme.palette.error.main } }}
+                    >
+                      <DeleteIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
             </ListItem>
           ))}
         </List>
@@ -227,45 +234,49 @@ const ManageLanguagesModal = ({ open, cultures, onChanged, onClose }: ManageLang
           </Typography>
         )}
 
-        <Divider sx={{ borderColor, mt: 0.5 }} />
+        {canManageCultures && (
+          <>
+            <Divider sx={{ borderColor, mt: 0.5 }} />
 
-        <Typography sx={{
-          fontSize: '0.68rem',
-          color: theme.palette.text.secondary,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          ...MONO,
-        }}>
-          {t.addNewLanguage}
-        </Typography>
+            <Typography sx={{
+              fontSize: '0.68rem',
+              color: theme.palette.text.secondary,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              ...MONO,
+            }}>
+              {t.addNewLanguage}
+            </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-          <TextField
-            label={t.cultureCodeLabel}
-            placeholder={t.cultureCodePlaceholder}
-            value={code}
-            onChange={e => setCode(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') void handleAdd(); }}
-            size="small"
-            fullWidth
-            error={isDuplicate || addError !== null}
-            helperText={isDuplicate ? t.duplicateLanguage : (addError ?? undefined)}
-            slotProps={{
-              inputLabel: { sx: { ...MONO, fontSize: '0.82rem' } },
-              input: { sx: { ...MONO, fontSize: '0.82rem' } },
-            }}
-          />
-          <Button
-            onClick={() => void handleAdd()}
-            disabled={!isValid || submitting}
-            variant="contained"
-            size="small"
-            startIcon={submitting ? <CircularProgress size={11} sx={{ color: 'inherit' }} /> : undefined}
-            sx={{ ...MONO, fontSize: '0.78rem', textTransform: 'none', flexShrink: 0, mt: 0.25 }}
-          >
-            {t.add}
-          </Button>
-        </Box>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+              <TextField
+                label={t.cultureCodeLabel}
+                placeholder={t.cultureCodePlaceholder}
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') void handleAdd(); }}
+                size="small"
+                fullWidth
+                error={isDuplicate || addError !== null}
+                helperText={isDuplicate ? t.duplicateLanguage : (addError ?? undefined)}
+                slotProps={{
+                  inputLabel: { sx: { ...MONO, fontSize: '0.82rem' } },
+                  input: { sx: { ...MONO, fontSize: '0.82rem' } },
+                }}
+              />
+              <Button
+                onClick={() => void handleAdd()}
+                disabled={!isValid || submitting}
+                variant="contained"
+                size="small"
+                startIcon={submitting ? <CircularProgress size={11} sx={{ color: 'inherit' }} /> : undefined}
+                sx={{ ...MONO, fontSize: '0.78rem', textTransform: 'none', flexShrink: 0, mt: 0.25 }}
+              >
+                {t.add}
+              </Button>
+            </Box>
+          </>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>

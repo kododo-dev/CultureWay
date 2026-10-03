@@ -18,6 +18,7 @@ import AddKeyModal from '../components/translations/AddKeyModal.tsx';
 import ManageLanguagesModal from '../components/translations/ManageLanguagesModal.tsx';
 import SelectionToolbar from '../components/translations/SelectionToolbar.tsx';
 import CultureFlag from '../components/translations/CultureFlag.tsx';
+import { MONO_FONT } from '../utils/fonts.ts';
 
 type KeyClassification = 'pending' | 'resettable' | 'deletable' | 'locked';
 
@@ -480,7 +481,7 @@ const TranslationsPage = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Typography sx={{
                         fontSize: '0.78rem',
-                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontFamily: MONO_FONT,
                         color: deleted ? theme.palette.error.main : resetting ? theme.palette.info.main : theme.palette.text.primary,
                         textDecoration: deleted ? 'line-through' : 'none',
                         wordBreak: 'break-all',
@@ -516,7 +517,7 @@ const TranslationsPage = () => {
                             outline: 'none',
                             background: 'transparent',
                             resize: 'none',
-                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontFamily: MONO_FONT,
                             fontSize: '0.8rem',
                             color: deleted || resetting ? theme.palette.text.disabled : theme.palette.text.primary,
                             p: 0.5,

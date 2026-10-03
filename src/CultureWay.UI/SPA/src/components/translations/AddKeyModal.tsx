@@ -9,6 +9,7 @@ import { useTheme } from '@mui/material/styles';
 import { useThemeMode } from '../../context/ThemeContext.tsx';
 import { useI18n } from '../../i18n/I18nContext.tsx';
 import { useNamespace, extractNamespace } from '../../context/NamespaceContext.tsx';
+import { MONO_FONT } from '../../utils/fonts.ts';
 
 interface AddKeyModalProps {
   open: boolean;
@@ -17,7 +18,7 @@ interface AddKeyModalProps {
   onClose: () => void;
 }
 
-const MONO = { fontFamily: "'IBM Plex Mono', monospace" };
+const MONO = { fontFamily: MONO_FONT };
 
 /** The part of `currentKey` after its namespace prefix — or after the last dot if it doesn't start with `currentNs`. */
 function leafOf(currentKey: string, currentNs: string): string {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Drawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -12,12 +12,23 @@ import { useI18n } from '../../i18n/I18nContext.tsx';
 import { useTheme } from '@mui/material/styles';
 import { LayoutContext } from '../../context/LayoutContext.tsx';
 import SideMenu from './SideMenu.tsx';
+import { MONO_FONT } from '../../utils/fonts.ts';
+import Link from '@mui/material/Link';
+import { useEditorSettings } from '../../context/EditorSettingsContext.tsx';
+import HostMenu from './HostMenu.tsx';
+import SessionExpiredDialog from './SessionExpiredDialog.tsx';
 
 const DRAWER_WIDTH = 248;
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const { mode, toggleMode } = useThemeMode();
   const { t } = useI18n();
+  const { title: hostTitle, homeUrl } = useEditorSettings();
+  const title = hostTitle || t.appTitle;
+
+  useEffect(() => {
+    document.title = title;
+  }, [title]);
   const theme = useTheme();
   const isDark = mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -59,9 +70,11 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
           color: theme.palette.text.primary,
           letterSpacing: '0.05em',
           lineHeight: 1.2,
-          fontFamily: "'IBM Plex Mono', monospace",
+          fontFamily: MONO_FONT,
         }}>
-          {t.appTitle}
+          {homeUrl
+            ? <Link href={homeUrl} underline="none" color="inherit">{title}</Link>
+            : title}
         </Typography>
         <Tooltip title={isDark ? t.switchToLight : t.switchToDark}>
           <IconButton
@@ -75,6 +88,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
       </Box>
 
       <SideMenu onNavigate={isMobile ? closeMobileMenu : undefined} />
+      <HostMenu />
     </>
   );
 
@@ -109,6 +123,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
           {children}
         </Box>
       </Box>
+      <SessionExpiredDialog />
     </LayoutContext.Provider>
   );
 };

@@ -16,6 +16,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useTheme } from '@mui/material/styles';
 import { useI18n } from '../../i18n/I18nContext.tsx';
 import { useNamespace, type NamespaceNode } from '../../context/NamespaceContext.tsx';
+import { MONO_FONT } from '../../utils/fonts.ts';
 
 const NamespaceTreeItem = ({ node, depth, onNavigate }: {
   node: NamespaceNode;
@@ -35,7 +36,7 @@ const NamespaceTreeItem = ({ node, depth, onNavigate }: {
   const textSx = {
     '& .MuiListItemText-primary': {
       fontSize: '0.8rem',
-      fontFamily: "'IBM Plex Mono', monospace",
+      fontFamily: MONO_FONT,
       color: active ? theme.palette.text.primary : theme.palette.text.secondary,
       fontWeight: active ? 600 : 400,
     },
@@ -90,7 +91,7 @@ const SideMenu = ({ onNavigate }: { onNavigate?: () => void }) => {
   const textSx = (active: boolean) => ({
     '& .MuiListItemText-primary': {
       fontSize: '0.8rem',
-      fontFamily: "'IBM Plex Mono', monospace",
+      fontFamily: MONO_FONT,
       color: active ? theme.palette.text.primary : theme.palette.text.secondary,
       fontWeight: active ? 600 : 400,
     },
@@ -126,7 +127,7 @@ const SideMenu = ({ onNavigate }: { onNavigate?: () => void }) => {
             color: isDark ? '#444' : '#bbb',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
-            fontFamily: 'monospace',
+            fontFamily: MONO_FONT,
             flexShrink: 0,
           }}>
             {t.namespaces}

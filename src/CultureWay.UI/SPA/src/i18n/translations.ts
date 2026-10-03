@@ -51,6 +51,11 @@ export interface Translations {
   defaultLanguage: string;
   addNewLanguage: string;
   close: string;
+  signOut: string;
+  sessionExpiredTitle: string;
+  sessionExpiredBody: string;
+  sessionExpiredContinue: string;
+  signInAgain: string;
 }
 
 export const en: Translations = {
@@ -106,6 +111,11 @@ export const en: Translations = {
   defaultLanguage: 'Default',
   addNewLanguage: 'Add new language',
   close: 'Close',
+  signOut: 'Sign out',
+  sessionExpiredTitle: 'Session expired',
+  sessionExpiredBody: 'You have been signed out. Sign in again in a new tab, then come back here. Your unsaved changes are kept on this page.',
+  sessionExpiredContinue: 'Continue',
+  signInAgain: 'Sign in in a new tab',
 };
 
 export const pl: Translations = {
@@ -161,6 +171,11 @@ export const pl: Translations = {
   defaultLanguage: 'Domyślny',
   addNewLanguage: 'Dodaj nowy język',
   close: 'Zamknij',
+  signOut: 'Wyloguj',
+  sessionExpiredTitle: 'Sesja wygasła',
+  sessionExpiredBody: 'Sesja się zakończyła. Zaloguj się ponownie w nowej karcie i wróć tutaj. Niezapisane zmiany zostają na tej stronie.',
+  sessionExpiredContinue: 'Kontynuuj',
+  signInAgain: 'Zaloguj w nowej karcie',
 };
 
 export const languages: Record<string, Translations> = { en, pl };

@@ -15,3 +15,23 @@ export interface TranslationKeyDto {
   key: string;
   culture: string;
 }
+
+export interface EditorLinkDto {
+  label: string;
+  url: string;
+}
+
+export interface EditorUserDto {
+  name: string;
+  accountUrl: string | null;
+  signOutUrl: string | null;
+}
+
+export interface EditorSettingsDto {
+  title: string | null;
+  homeUrl: string | null;
+  language: string | null;
+  links: EditorLinkDto[];
+  user: EditorUserDto | null;
+  canManageCultures: boolean;
+}

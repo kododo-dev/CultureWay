@@ -17,8 +17,9 @@ import { useTheme } from '@mui/material/styles';
 import { useThemeMode } from '../../context/ThemeContext.tsx';
 import { useI18n } from '../../i18n/I18nContext.tsx';
 import { useLayout } from '../../context/LayoutContext.tsx';
+import { MONO_FONT } from '../../utils/fonts.ts';
 
-const MONO = { fontFamily: "'IBM Plex Mono', monospace" };
+const MONO = { fontFamily: MONO_FONT };
 
 interface PageHeaderProps {
   namespaceLabel: string;

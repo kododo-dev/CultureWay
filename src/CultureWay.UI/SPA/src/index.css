@@ -1,5 +1,5 @@
 :root {
-  font-family: 'IBM Plex Mono', 'Fira Code', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
