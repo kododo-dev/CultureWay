@@ -21,4 +21,6 @@ app.UseCultureWay("/translations").RequireAuthorization("Admin");
 
 The editor lets you edit translations, add/delete languages, choose the default language, and hide languages per browser. It is not protected by default, so restrict access before exposing the app.
 
+`AddEditor(editor => ...)` fits the editor into your application: a title and home link, links to your other pages, the signed-in user with a sign-out button, the interface language, and `CanManageCultures` to decide who may add and delete languages.
+
 Full documentation: https://github.com/kododo-dev/CultureWay

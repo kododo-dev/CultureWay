@@ -89,6 +89,32 @@ The editor is not protected by default. Anyone who can reach the route can chang
 app.UseCultureWay("/translations").RequireAuthorization("Admin");
 ```
 
+To let only some of the users who can open the editor add or delete languages, set `CanManageCultures` (see below). The others can still edit translations and hide languages, and the API answers their language changes with 403.
+
+## Fitting the editor into your app
+
+By default the editor is a standalone page. `AddEditor` takes options that make it part of your application:
+
+```csharp
+x.AddEditor(editor =>
+{
+    editor.Title    = "My app";       // top of the side menu and the browser tab
+    editor.HomeUrl  = "/";            // the title links here
+    editor.Language = "pl";           // editor's own interface: en or pl; empty follows the browser
+    editor.Links    = ctx => ctx.User.IsInRole("Admin")
+        ? [new EditorLink("Users", "/admin/users")]
+        : [];
+    editor.User     = ctx => ctx.User.Identity?.IsAuthenticated == true
+        ? new EditorUser(ctx.User.Identity.Name!) { AccountUrl = "/account", SignOutUrl = "/logout" }
+        : null;
+    editor.CanManageCultures = ctx => ctx.User.IsInRole("Admin");
+});
+```
+
+The settings that take an `HttpContext` run on every request, so they can depend on who is signed in. Links and the user appear at the bottom of the side menu. The sign-out button submits a plain form POST to `SignOutUrl` without an antiforgery token, so that endpoint has to accept one.
+
+The editor also remembers the light or dark theme in `localStorage` under `cultureway.theme` (`light` or `dark`). Your own pages on the same origin can read that key to match it. When a request fails because the session expired (a 401, or a redirect to a sign-in page), the editor asks the user to sign in again in a new tab, so edits that were not saved stay on the page.
+
 ## Custom store
 
 Implement `IStore` from `Kododo.CultureWay.Core` and register it before `AddCultureWay`. A minimal store needs `InitializeAsync`, `GetAllAsync`, `SetAsync` and `DeleteAsync`.
