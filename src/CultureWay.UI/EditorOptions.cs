@@ -71,6 +71,7 @@ public static class EditorLinkIcons
     public const string Translations = "translations";
     public const string Users = "users";
     public const string Key = "key";
+    public const string History = "history";
 }
 
 /// <summary>

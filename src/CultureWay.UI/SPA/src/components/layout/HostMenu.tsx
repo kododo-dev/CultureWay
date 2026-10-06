@@ -10,6 +10,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
+import HistoryIcon from '@mui/icons-material/History';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
@@ -26,6 +27,7 @@ const ICONS: Record<string, typeof ArrowOutwardIcon> = {
   translations: TranslateIcon,
   users: PeopleOutlinedIcon,
   key: KeyOutlinedIcon,
+  history: HistoryIcon,
 };
 
 const trimSlash = (path: string) => path.replace(/\/+$/, '') || '/';
