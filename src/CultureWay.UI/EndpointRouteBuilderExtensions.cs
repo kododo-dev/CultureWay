@@ -1,5 +1,7 @@
 using Kododo.CultureWay.UI.API.AddCulture;
+using Kododo.CultureWay.UI.API.ApplyImport;
 using Kododo.CultureWay.UI.API.DeleteCulture;
+using Kododo.CultureWay.UI.API.PreviewImport;
 using Kododo.CultureWay.UI.API.SetDefaultCulture;
 using Kododo.Reiho.AspNetCore.API;
 using Microsoft.AspNetCore.Http;
@@ -58,7 +60,7 @@ public static class EndpointRouteBuilderExtensions
         private void MapApi()
         {
             var api = endpoints.MapGroup("/api");
-            api.AddEndpointFilter(RequireCultureManagement);
+            api.AddEndpointFilter(RequirePermission);
             api.MapRequests(typeof(EndpointRouteBuilderExtensions).Assembly);
         }
     }
@@ -66,17 +68,26 @@ public static class EndpointRouteBuilderExtensions
     private static readonly HashSet<string> CultureManagementRequests =
         new([nameof(AddCulture), nameof(DeleteCulture), nameof(SetDefaultCulture)], StringComparer.OrdinalIgnoreCase);
 
+    private static readonly HashSet<string> ImportRequests =
+        new([nameof(PreviewImport), nameof(ApplyImport)], StringComparer.OrdinalIgnoreCase);
+
     // Reiho maps each request at its type name, so the last path segment says which request this is.
-    private static async ValueTask<object?> RequireCultureManagement(
+    private static async ValueTask<object?> RequirePermission(
         EndpointFilterInvocationContext context,
         EndpointFilterDelegate next)
     {
         var http = context.HttpContext;
         var request = http.Request.Path.Value?.Split('/').LastOrDefault();
-        if (request is not null && CultureManagementRequests.Contains(request))
+        var editorOptions = http.RequestServices.GetService<EditorOptions>();
+        if (request is not null && editorOptions is not null)
         {
-            var editorOptions = http.RequestServices.GetService<EditorOptions>();
-            if (editorOptions is not null && !editorOptions.AllowsCultureManagement(http))
+            var allowed = true;
+            if (CultureManagementRequests.Contains(request))
+                allowed = editorOptions.AllowsCultureManagement(http);
+            else if (ImportRequests.Contains(request))
+                allowed = editorOptions.AllowsImport(http);
+
+            if (!allowed)
                 return Results.StatusCode(StatusCodes.Status403Forbidden);
         }
 

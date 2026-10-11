@@ -10,6 +10,8 @@ const defaults: EditorSettingsDto = {
   links: [],
   user: null,
   canManageCultures: true,
+  canImport: true,
+  maxImportBytes: 5 * 1024 * 1024,
 };
 
 const EditorSettingsContext = createContext<EditorSettingsDto>(defaults);

@@ -56,6 +56,40 @@ export interface Translations {
   sessionExpiredBody: string;
   sessionExpiredContinue: string;
   signInAgain: string;
+  importExport: string;
+  exportTab: string;
+  importTab: string;
+  formatLabel: string;
+  formatJson: string;
+  formatXlsx: string;
+  languageLabel: string;
+  keysLabel: string;
+  everyNamespace: string;
+  selectedNamespaceOnly: string;
+  missingInLabel: string;
+  missingInAny: string;
+  download: string;
+  chooseFile: string;
+  fileLanguage: string;
+  modeOverwrite: string;
+  modeOnlyMissing: string;
+  preview: string;
+  importNothing: string;
+  summaryNew: string;
+  summaryChanged: string;
+  summaryUnchanged: string;
+  summaryKept: string;
+  summarySkipped: string;
+  unknownLanguages: string;
+  addTheseLanguages: string;
+  importApply: string;
+  importDone: string;
+  importSaveFirst: string;
+  fileTooLarge: string;
+  andMore: string;
+  skippedTitle: string;
+  changesTitle: string;
+  emptyValue: string;
 }
 
 export const en: Translations = {
@@ -116,6 +150,40 @@ export const en: Translations = {
   sessionExpiredBody: 'You have been signed out. Sign in again in a new tab, then come back here. Your unsaved changes are kept on this page.',
   sessionExpiredContinue: 'Continue',
   signInAgain: 'Sign in in a new tab',
+  importExport: 'Import / export',
+  exportTab: 'Export',
+  importTab: 'Import',
+  formatLabel: 'Format',
+  formatJson: 'JSON, one language',
+  formatXlsx: 'Excel, a column per language',
+  languageLabel: 'Language',
+  keysLabel: 'Keys',
+  everyNamespace: 'All namespaces',
+  selectedNamespaceOnly: 'Only the selected namespace',
+  missingInLabel: 'Only keys without a translation in',
+  missingInAny: '(any key)',
+  download: 'Download',
+  chooseFile: 'Choose a .json or .xlsx file',
+  fileLanguage: 'Language of the file',
+  modeOverwrite: 'Add new values and update existing ones',
+  modeOnlyMissing: 'Only add missing values',
+  preview: 'Preview',
+  importNothing: 'Nothing to import. Every value in the file is already here.',
+  summaryNew: 'new',
+  summaryChanged: 'changed',
+  summaryUnchanged: 'unchanged',
+  summaryKept: 'kept',
+  summarySkipped: 'skipped',
+  unknownLanguages: 'Languages the editor does not have (skipped):',
+  addTheseLanguages: 'Add these languages',
+  importApply: 'Import',
+  importDone: 'Imported',
+  importSaveFirst: 'Save or discard your changes before importing.',
+  fileTooLarge: 'The file is larger than',
+  andMore: 'more',
+  skippedTitle: 'Skipped',
+  changesTitle: 'Changes',
+  emptyValue: '(none)',
 };
 
 export const pl: Translations = {
@@ -176,6 +244,40 @@ export const pl: Translations = {
   sessionExpiredBody: 'Sesja się zakończyła. Zaloguj się ponownie w nowej karcie i wróć tutaj. Niezapisane zmiany zostają na tej stronie.',
   sessionExpiredContinue: 'Kontynuuj',
   signInAgain: 'Zaloguj w nowej karcie',
+  importExport: 'Import / eksport',
+  exportTab: 'Eksport',
+  importTab: 'Import',
+  formatLabel: 'Format',
+  formatJson: 'JSON, jeden język',
+  formatXlsx: 'Excel, kolumna na język',
+  languageLabel: 'Język',
+  keysLabel: 'Klucze',
+  everyNamespace: 'Wszystkie przestrzenie nazw',
+  selectedNamespaceOnly: 'Tylko wybrana przestrzeń nazw',
+  missingInLabel: 'Tylko klucze bez tłumaczenia na',
+  missingInAny: '(dowolny klucz)',
+  download: 'Pobierz',
+  chooseFile: 'Wybierz plik .json lub .xlsx',
+  fileLanguage: 'Język pliku',
+  modeOverwrite: 'Dodaj nowe wartości i zaktualizuj istniejące',
+  modeOnlyMissing: 'Dodaj tylko brakujące wartości',
+  preview: 'Podgląd',
+  importNothing: 'Nie ma czego importować. Wszystkie wartości z pliku już tu są.',
+  summaryNew: 'nowe',
+  summaryChanged: 'zmienione',
+  summaryUnchanged: 'bez zmian',
+  summaryKept: 'pozostawione',
+  summarySkipped: 'pominięte',
+  unknownLanguages: 'Języki, których nie ma w edytorze (pominięte):',
+  addTheseLanguages: 'Dodaj te języki',
+  importApply: 'Importuj',
+  importDone: 'Zaimportowano',
+  importSaveFirst: 'Zapisz lub odrzuć zmiany przed importem.',
+  fileTooLarge: 'Plik jest większy niż',
+  andMore: 'więcej',
+  skippedTitle: 'Pominięte',
+  changesTitle: 'Zmiany',
+  emptyValue: '(brak)',
 };
 
 export const languages: Record<string, Translations> = { en, pl };

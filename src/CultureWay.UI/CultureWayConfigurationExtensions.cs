@@ -1,3 +1,4 @@
+using Kododo.CultureWay.UI.ImportExport;
 using Kododo.Reiho.AspNetCore.API;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -42,6 +43,7 @@ public static class CultureWayConfigurationExtensions
         configuration.Services.AddOptions();
         configuration.Services.AddHttpContextAccessor();
         configuration.Services.AddSingleton(editorOptions);
+        configuration.Services.AddScoped<ImportPlanner>();
         configuration.Services.AddRequestHandlers(typeof(CultureWayConfigurationExtensions).Assembly);
         return configuration;
     }

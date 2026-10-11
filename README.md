@@ -81,6 +81,19 @@ builder.Services.AddCultureWay(x =>
 
 A key that comes from `.resx` can't be deleted. You can override its value, and later reset it to the value from the resource file.
 
+## Import and export
+
+The editor exports and imports translations in two formats:
+
+- **JSON**: one language per file, as a flat object (`{"Checkout.Pay": "Pay now"}`). Keys stay flat because `Checkout.Pay` and `Checkout.Pay.Tooltip` can both exist, which a nested object can't hold.
+- **Excel (.xlsx)**: a `key` column followed by one column per language, e.g. `key | en | pl`.
+
+An export can be limited to a namespace, or to the keys that have no value in one language, which is handy for sending work to a translator.
+
+An import shows what it would change before anything is written. It adds and updates values and never deletes: keys missing from the file stay as they are. It can also add only missing values and leave existing ones alone. Rows it can't use and columns for languages the editor doesn't serve are listed and skipped. All changes are saved in one store call.
+
+Everyone who can open the editor may import unless you set `CanImport` (see below). Files are limited to 5 MB; change it with `MaxImportBytes`.
+
 ## Security
 
 The editor is not protected by default. Anyone who can reach the route can change or delete translations, so restrict it before exposing the app:
@@ -108,6 +121,8 @@ x.AddEditor(editor =>
         ? new EditorUser(ctx.User.Identity.Name!) { AccountUrl = "/account", SignOutUrl = "/logout" }
         : null;
     editor.CanManageCultures = ctx => ctx.User.IsInRole("Admin");
+    editor.CanImport      = ctx => ctx.User.IsInRole("Admin");
+    editor.MaxImportBytes = 1024 * 1024;
 });
 ```
 

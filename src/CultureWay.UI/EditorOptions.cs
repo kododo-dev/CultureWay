@@ -45,7 +45,21 @@ public sealed class EditorOptions
     /// </summary>
     public Func<HttpContext, bool>? CanManageCultures { get; set; }
 
+    /// <summary>
+    /// Whether the current user may import translations from a file. When it returns <c>false</c>,
+    /// the editor offers only export and the API answers import requests with 403. Everyone who can
+    /// open the editor may import when this is not set.
+    /// </summary>
+    public Func<HttpContext, bool>? CanImport { get; set; }
+
+    /// <summary>
+    /// The largest file the editor imports, in bytes. Defaults to 5 MB.
+    /// </summary>
+    public long MaxImportBytes { get; set; } = 5 * 1024 * 1024;
+
     internal bool AllowsCultureManagement(HttpContext context) => CanManageCultures?.Invoke(context) ?? true;
+
+    internal bool AllowsImport(HttpContext context) => CanImport?.Invoke(context) ?? true;
 }
 
 /// <summary>

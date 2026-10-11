@@ -6,7 +6,9 @@ public record EditorSettingsDto(
     string? Language,
     EditorLinkDto[] Links,
     EditorUserDto? User,
-    bool CanManageCultures);
+    bool CanManageCultures,
+    bool CanImport,
+    long MaxImportBytes);
 
 public record EditorLinkDto(string Label, string Url, string? Icon);
 

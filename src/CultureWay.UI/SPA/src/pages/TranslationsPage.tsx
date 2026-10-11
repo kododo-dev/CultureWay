@@ -16,6 +16,7 @@ import type { TranslationDto, TranslationKeyDto } from '../api/api.model.ts';
 import PageHeader from '../components/layout/PageHeader.tsx';
 import AddKeyModal from '../components/translations/AddKeyModal.tsx';
 import ManageLanguagesModal from '../components/translations/ManageLanguagesModal.tsx';
+import ImportExportModal from '../components/translations/ImportExportModal.tsx';
 import SelectionToolbar from '../components/translations/SelectionToolbar.tsx';
 import CultureFlag from '../components/translations/CultureFlag.tsx';
 import { MONO_FONT } from '../utils/fonts.ts';
@@ -78,6 +79,7 @@ const TranslationsPage = () => {
   const [snack, setSnack]               = useState<SnackState>({ open: false });
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addLangModalOpen, setAddLangModalOpen] = useState(false);
+  const [importExportOpen, setImportExportOpen] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [prevTranslations, setPrevTranslations] = useState(translations);
 
@@ -331,6 +333,7 @@ const TranslationsPage = () => {
         onDiscard={handleDiscard}
         onAddKey={() => setAddModalOpen(true)}
         onManageLanguages={() => setAddLangModalOpen(true)}
+        onImportExport={() => setImportExportOpen(true)}
       />
 
       {selectedKeys.size > 0 && (
@@ -557,6 +560,24 @@ const TranslationsPage = () => {
         cultures={cultures}
         onChanged={() => void reload()}
         onClose={() => setAddLangModalOpen(false)}
+      />
+
+      <ImportExportModal
+        open={importExportOpen}
+        cultures={cultures}
+        selectedNamespace={selectedNamespace}
+        namespaceLabel={namespaceLabel}
+        hasUnsavedChanges={dirtyCount > 0}
+        onImported={(added, updated) => {
+          void reload();
+          setSnack({
+            open: true,
+            severity: 'success',
+            messages: [`${t.importDone}: ${added} ${t.summaryNew}, ${updated} ${t.summaryChanged}`],
+          });
+        }}
+        onCulturesChanged={() => void reload()}
+        onClose={() => setImportExportOpen(false)}
       />
 
       <Snackbar

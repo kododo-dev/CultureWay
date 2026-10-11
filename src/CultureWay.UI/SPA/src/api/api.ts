@@ -1,4 +1,14 @@
-import type { CultureDto, EditorSettingsDto, TranslationDto, TranslationKeyDto } from './api.model.ts';
+import type {
+  CultureDto,
+  EditorSettingsDto,
+  ExportFileDto,
+  ExportRequest,
+  ImportInput,
+  ImportPreviewDto,
+  ImportResultDto,
+  TranslationDto,
+  TranslationKeyDto,
+} from './api.model.ts';
 
 const BASE = `${import.meta.env.BASE_URL}api`;
 
@@ -67,3 +77,12 @@ export const deleteCulture = (culture: string): Promise<string[]> =>
 
 export const setDefaultCulture = (culture: string): Promise<string[]> =>
   post<string[]>('/SetDefaultCulture', { culture });
+
+export const exportTranslations = (request: ExportRequest): Promise<ExportFileDto> =>
+  post<ExportFileDto>('/ExportTranslations', request);
+
+export const previewImport = (input: ImportInput): Promise<ImportPreviewDto> =>
+  post<ImportPreviewDto>('/PreviewImport', input);
+
+export const applyImport = (input: ImportInput): Promise<ImportResultDto> =>
+  post<ImportResultDto>('/ApplyImport', input);

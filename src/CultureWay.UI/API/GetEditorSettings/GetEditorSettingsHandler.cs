@@ -26,6 +26,8 @@ internal sealed class GetEditorSettingsHandler(EditorOptions options, IHttpConte
             options.Language,
             links,
             user,
-            options.AllowsCultureManagement(context)));
+            options.AllowsCultureManagement(context),
+            options.AllowsImport(context),
+            options.MaxImportBytes));
     }
 }

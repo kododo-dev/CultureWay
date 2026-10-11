@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
 import LanguageIcon from '@mui/icons-material/Language';
+import ImportExportIcon from '@mui/icons-material/ImportExport';
 import MenuIcon from '@mui/icons-material/Menu';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -31,6 +32,7 @@ interface PageHeaderProps {
   onDiscard: () => void;
   onAddKey: () => void;
   onManageLanguages: () => void;
+  onImportExport: () => void;
 }
 
 const PageHeader = ({
@@ -43,6 +45,7 @@ const PageHeader = ({
   onDiscard,
   onAddKey,
   onManageLanguages,
+  onImportExport,
 }: PageHeaderProps) => {
   const theme = useTheme();
   const { mode } = useThemeMode();
@@ -188,6 +191,23 @@ const PageHeader = ({
         >
           {saving ? t.saving : t.save}
         </Button>
+
+        <Tooltip title={t.importExport}>
+          <IconButton
+            size="small"
+            onClick={onImportExport}
+            sx={{
+              color: theme.palette.text.secondary,
+              border: `1px solid ${isDark ? '#2e2e2e' : '#ddd'}`,
+              borderRadius: '6px',
+              p: 0.5,
+              flexShrink: 0,
+              '&:hover': { color: theme.palette.primary.main, borderColor: theme.palette.primary.main },
+            }}
+          >
+            <ImportExportIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
 
         <Tooltip title={t.manageLanguages}>
           <IconButton
