@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.UI.API.SetDefaultCulture;
 using NSubstitute;
@@ -19,7 +18,7 @@ public class SetDefaultCultureHandlerTests
 
         await handler.HandleAsync(new SetDefaultCulture("fr"), CancellationToken.None);
 
-        options.DefaultCulture.Should().Be("fr");
+        Assert.Equal("fr", options.DefaultCulture);
     }
 
     [Fact]
@@ -30,7 +29,7 @@ public class SetDefaultCultureHandlerTests
 
         var result = await handler.HandleAsync(new SetDefaultCulture("fr"), CancellationToken.None);
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -53,7 +52,7 @@ public class SetDefaultCultureHandlerTests
 
         await handler.HandleAsync(new SetDefaultCulture("FR"), CancellationToken.None);
 
-        options.DefaultCulture.Should().Be("fr");
+        Assert.Equal("fr", options.DefaultCulture);
     }
 
     [Fact]
@@ -64,7 +63,7 @@ public class SetDefaultCultureHandlerTests
 
         var result = await handler.HandleAsync(new SetDefaultCulture("en"), CancellationToken.None);
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -87,8 +86,8 @@ public class SetDefaultCultureHandlerTests
 
         var result = await handler.HandleAsync(new SetDefaultCulture(""), CancellationToken.None);
 
-        result.Should().ContainSingle();
-        options.DefaultCulture.Should().Be("en");
+        Assert.Single(result);
+        Assert.Equal("en", options.DefaultCulture);
     }
 
     [Fact]
@@ -99,8 +98,8 @@ public class SetDefaultCultureHandlerTests
 
         var result = await handler.HandleAsync(new SetDefaultCulture("de"), CancellationToken.None);
 
-        result.Should().ContainSingle();
-        options.DefaultCulture.Should().Be("en");
+        Assert.Single(result);
+        Assert.Equal("en", options.DefaultCulture);
     }
 
     [Fact]

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using FluentAssertions;
 using Kododo.CultureWay.PostgreSQL.Tests.Fixtures;
 using Kododo.CultureWay.UI;
 using Microsoft.AspNetCore.Builder;
@@ -41,14 +40,14 @@ public class PostgresApiTests : IAsyncLifetime
     public async Task GetTranslations_Returns200()
     {
         var response = await _client.PostAsJsonAsync("/translations/api/GetTranslations", new { });
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task GetTranslations_InitiallyEmpty_ReturnsEmptyArray()
     {
         var translations = await FetchTranslations();
-        translations.Should().BeEmpty();
+        Assert.Empty(translations);
     }
 
     [Fact]
@@ -56,8 +55,8 @@ public class PostgresApiTests : IAsyncLifetime
     {
         var cultures = await FetchCultures();
 
-        cultures.Should().HaveCount(3);
-        cultures.Select(c => c.Code).Should().BeEquivalentTo("en", "pl", "de");
+        Assert.Equal(3, cultures.Count());
+        Assert.Equivalent(new[] { "en", "pl", "de" }, cultures.Select(c => c.Code), strict: true);
     }
 
     [Fact]
@@ -66,9 +65,9 @@ public class PostgresApiTests : IAsyncLifetime
         var response = await PostUpdate(
             translations: [("Hello", "en", "Hello World")]);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().BeEmpty();
+        Assert.Empty(errors!);
     }
 
     [Fact]
@@ -78,7 +77,7 @@ public class PostgresApiTests : IAsyncLifetime
 
         var translations = await FetchTranslations();
 
-        translations.Should().Contain(t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello World");
+        Assert.Contains(translations, t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello World");
     }
 
     [Fact]
@@ -92,7 +91,7 @@ public class PostgresApiTests : IAsyncLifetime
         var response     = await restartedClient.PostAsJsonAsync("/translations/api/GetTranslations", new { });
         var translations = (await response.Content.ReadFromJsonAsync<TranslationResponse[]>(JsonOpts))!;
 
-        translations.Should().Contain(t => t.Key == "Persistent" && t.Culture == "en" && t.Value == "survived");
+        Assert.Contains(translations, t => t.Key == "Persistent" && t.Culture == "en" && t.Value == "survived");
     }
 
     [Fact]
@@ -106,7 +105,7 @@ public class PostgresApiTests : IAsyncLifetime
         ]);
 
         var translations = await FetchTranslations();
-        translations.Should().HaveCount(3);
+        Assert.Equal(3, translations.Count());
     }
 
     [Fact]
@@ -116,7 +115,7 @@ public class PostgresApiTests : IAsyncLifetime
         await PostUpdate(translations: [("Key", "en", "Second")]);
 
         var translations = await FetchTranslations();
-        translations.Single(t => t.Key == "Key" && t.Culture == "en").Value.Should().Be("Second");
+        Assert.Equal("Second", translations.Single(t => t.Key == "Key" && t.Culture == "en").Value);
     }
 
     [Fact]
@@ -131,7 +130,7 @@ public class PostgresApiTests : IAsyncLifetime
         await PostUpdate(translations: [("A", "en", "A-en-updated")]);
 
         var translations = await FetchTranslations();
-        translations.Should().Contain(t => t.Key == "B" && t.Culture == "en" && t.Value == "B-en");
+        Assert.Contains(translations, t => t.Key == "B" && t.Culture == "en" && t.Value == "B-en");
     }
 
     [Fact]
@@ -146,8 +145,8 @@ public class PostgresApiTests : IAsyncLifetime
         await PostUpdate(keysToDelete: [("Remove", "en")]);
 
         var translations = await FetchTranslations();
-        translations.Should().NotContain(t => t.Key == "Remove");
-        translations.Should().Contain(t => t.Key == "Keep");
+        Assert.DoesNotContain(translations, t => t.Key == "Remove");
+        Assert.Contains(translations, t => t.Key == "Keep");
     }
 
     [Fact]
@@ -162,8 +161,8 @@ public class PostgresApiTests : IAsyncLifetime
         await PostUpdate(keysToDelete: [("Hello", "en")]);
 
         var translations = await FetchTranslations();
-        translations.Should().NotContain(t => t.Key == "Hello" && t.Culture == "en");
-        translations.Should().Contain(t => t.Key == "Hello" && t.Culture == "pl" && t.Value == "Cześć");
+        Assert.DoesNotContain(translations, t => t.Key == "Hello" && t.Culture == "en");
+        Assert.Contains(translations, t => t.Key == "Hello" && t.Culture == "pl" && t.Value == "Cześć");
     }
 
     [Fact]
@@ -178,7 +177,7 @@ public class PostgresApiTests : IAsyncLifetime
         var response     = await restartedClient.PostAsJsonAsync("/translations/api/GetTranslations", new { });
         var translations = (await response.Content.ReadFromJsonAsync<TranslationResponse[]>(JsonOpts))!;
 
-        translations.Should().NotContain(t => t.Key == "ToDelete");
+        Assert.DoesNotContain(translations, t => t.Key == "ToDelete");
     }
 
     // ── helpers ────────────────────────────────────────────────────────

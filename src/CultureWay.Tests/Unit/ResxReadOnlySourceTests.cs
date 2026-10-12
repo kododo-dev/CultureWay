@@ -1,5 +1,4 @@
 using System.Globalization;
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Localization;
 using Microsoft.Extensions.Localization;
@@ -46,12 +45,12 @@ public class ResxReadOnlySourceTests
 
         var result = await source.GetDefaultsAsync();
 
-        result.Should().BeEquivalentTo(new[]
+        Assert.Equivalent(new[]
         {
             new Translation("Title", "en", "Hello"),
             new Translation("Bye", "en", "Goodbye"),
             new Translation("Title", "pl", "Czesc"),
-        });
+        }, result, strict: true);
     }
 
     [Fact]
@@ -61,7 +60,7 @@ public class ResxReadOnlySourceTests
 
         var result = await source.GetDefaultsAsync();
 
-        result.Should().ContainSingle().Which.Key.Should().Be("Home.Title");
+        Assert.Equal("Home.Title", Assert.Single(result).Key);
     }
 
     [Fact]
@@ -71,7 +70,7 @@ public class ResxReadOnlySourceTests
 
         var result = await source.GetDefaultsAsync();
 
-        result.Should().ContainSingle().Which.Key.Should().Be("Title");
+        Assert.Equal("Title", Assert.Single(result).Key);
     }
 
     [Fact]
@@ -81,7 +80,7 @@ public class ResxReadOnlySourceTests
 
         var result = await source.GetDefaultsAsync();
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -92,7 +91,7 @@ public class ResxReadOnlySourceTests
 
         await source.GetDefaultsAsync();
 
-        localizer.IncludeParentCulturesArg.Should().BeTrue();
+        Assert.True(localizer.IncludeParentCulturesArg);
     }
 
     [Fact]
@@ -106,7 +105,7 @@ public class ResxReadOnlySourceTests
 
             await source.GetDefaultsAsync();
 
-            CultureInfo.CurrentUICulture.Name.Should().Be("de");
+            Assert.Equal("de", CultureInfo.CurrentUICulture.Name);
         }
         finally
         {
@@ -123,10 +122,8 @@ public class ResxReadOnlySourceTests
             CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("de");
             var source = new ResxReadOnlySource(new FakeLocalizer(Sample(), throwOnRead: true), "", Options("en"));
 
-            var act = () => source.GetDefaultsAsync();
-
-            await act.Should().ThrowAsync<InvalidOperationException>();
-            CultureInfo.CurrentUICulture.Name.Should().Be("de");
+            await Assert.ThrowsAnyAsync<InvalidOperationException>(() => source.GetDefaultsAsync());
+            Assert.Equal("de", CultureInfo.CurrentUICulture.Name);
         }
         finally
         {

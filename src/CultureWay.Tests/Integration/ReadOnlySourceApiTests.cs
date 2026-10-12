@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.UI;
@@ -59,9 +58,9 @@ public class ReadOnlySourceApiTests : IAsyncLifetime
     {
         var result = await FetchTranslations();
 
-        result.Should().HaveCount(2);
-        result.Should().AllSatisfy(t => t.HasExternalDefault.Should().BeTrue());
-        result.Single(t => t.Culture == "pl").Value.Should().Be("Tytul");
+        Assert.Equal(2, result.Count());
+        Assert.All(result, t => Assert.True(t.HasExternalDefault));
+        Assert.Equal("Tytul", result.Single(t => t.Culture == "pl").Value);
     }
 
     [Fact]
@@ -71,9 +70,9 @@ public class ReadOnlySourceApiTests : IAsyncLifetime
 
         var en = (await FetchTranslations()).Single(t => t.Culture == "en");
 
-        en.Value.Should().Be("Custom");
-        en.HasExternalDefault.Should().BeTrue();
-        en.ExternalDefaultValue.Should().Be("Title");
+        Assert.Equal("Custom", en.Value);
+        Assert.True(en.HasExternalDefault);
+        Assert.Equal("Title", en.ExternalDefaultValue);
     }
 
     [Fact]
@@ -84,8 +83,8 @@ public class ReadOnlySourceApiTests : IAsyncLifetime
         await PostUpdate(keysToDelete: [("App.Title", "en")]);
 
         var en = (await FetchTranslations()).Single(t => t.Culture == "en");
-        en.Value.Should().Be("Title");
-        en.HasExternalDefault.Should().BeTrue();
+        Assert.Equal("Title", en.Value);
+        Assert.True(en.HasExternalDefault);
     }
 
     [Fact]
@@ -95,7 +94,7 @@ public class ReadOnlySourceApiTests : IAsyncLifetime
 
         var result = await FetchTranslations();
 
-        result.Should().HaveCount(2);
+        Assert.Equal(2, result.Count());
     }
 
     private async Task<TranslationResponse[]> FetchTranslations()
