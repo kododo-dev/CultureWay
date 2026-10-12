@@ -156,7 +156,6 @@ The editor also remembers the light or dark theme in `localStorage` under `cultu
 ## Limitations
 
 - An edit reloads the translations only in the instance that saved it. When the app runs as several replicas, the other replicas pick up the change after a restart.
-- All `IStringLocalizer<T>` instances share one key space, whatever `T` is. Keys that repeat across `.resx` files of different types resolve to the same translation.
 - Values are formatted with `string.Format`. There is no plural or ICU message support, and a malformed placeholder such as `{0` throws when the string is used.
 
 ## Custom store
