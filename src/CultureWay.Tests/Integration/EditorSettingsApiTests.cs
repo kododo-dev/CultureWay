@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using FluentAssertions;
 using Kododo.CultureWay.UI;
 using Kododo.CultureWay.UI.DTO;
 using Microsoft.AspNetCore.Builder;
@@ -47,7 +46,7 @@ public class EditorSettingsApiTests
             request.Headers.Add("X-Role", role);
 
         var response = await client.SendAsync(request);
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<EditorSettingsDto>(JsonOpts))!;
     }
 
@@ -59,12 +58,12 @@ public class EditorSettingsApiTests
         await using var app = await StartAsync();
         var settings = await FetchSettings(app.GetTestClient());
 
-        settings.Title.Should().BeNull();
-        settings.HomeUrl.Should().BeNull();
-        settings.Language.Should().BeNull();
-        settings.Links.Should().BeEmpty();
-        settings.User.Should().BeNull();
-        settings.CanManageCultures.Should().BeTrue();
+        Assert.Null(settings.Title);
+        Assert.Null(settings.HomeUrl);
+        Assert.Null(settings.Language);
+        Assert.Empty(settings.Links);
+        Assert.Null(settings.User);
+        Assert.True(settings.CanManageCultures);
     }
 
     [Fact]
@@ -80,11 +79,11 @@ public class EditorSettingsApiTests
         });
         var settings = await FetchSettings(app.GetTestClient());
 
-        settings.Title.Should().Be("Polyglot");
-        settings.HomeUrl.Should().Be("/");
-        settings.Language.Should().Be("pl");
-        settings.Links.Should().ContainSingle().Which.Should().Be(new EditorLinkDto("Users", "/admin/users", "users"));
-        settings.User.Should().Be(new EditorUserDto("Ada", "/account", "/logout"));
+        Assert.Equal("Polyglot", settings.Title);
+        Assert.Equal("/", settings.HomeUrl);
+        Assert.Equal("pl", settings.Language);
+        Assert.Equal(new EditorLinkDto("Users", "/admin/users", "users"), Assert.Single(settings.Links));
+        Assert.Equal(new EditorUserDto("Ada", "/account", "/logout"), settings.User);
     }
 
     [Fact]
@@ -100,10 +99,10 @@ public class EditorSettingsApiTests
         var admin  = await FetchSettings(client, "Admin");
         var editor = await FetchSettings(client, "Editor");
 
-        admin.Links.Should().HaveCount(1);
-        admin.CanManageCultures.Should().BeTrue();
-        editor.Links.Should().BeEmpty();
-        editor.CanManageCultures.Should().BeFalse();
+        Assert.Single(admin.Links);
+        Assert.True(admin.CanManageCultures);
+        Assert.Empty(editor.Links);
+        Assert.False(editor.CanManageCultures);
     }
 
     [Theory]
@@ -118,11 +117,11 @@ public class EditorSettingsApiTests
         var response = await client.PostAsync($"/translations/api/{request}",
             new StringContent(body, System.Text.Encoding.UTF8, "application/json"));
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var cultures = await (await client.PostAsJsonAsync("/translations/api/GetCultures", new { }))
             .Content.ReadFromJsonAsync<CultureDto[]>(JsonOpts);
-        cultures!.Select(c => c.Code).Should().BeEquivalentTo("en", "pl");
-        cultures!.Single(c => c.IsDefault).Code.Should().Be("en");
+        Assert.Equivalent(new[] { "en", "pl" }, cultures!.Select(c => c.Code), strict: true);
+        Assert.Equal("en", cultures!.Single(c => c.IsDefault).Code);
     }
 
     [Fact]
@@ -137,8 +136,8 @@ public class EditorSettingsApiTests
 
         var response = await app.GetTestClient().SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await response.Content.ReadFromJsonAsync<string[]>(JsonOpts)).Should().BeEmpty();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty((await response.Content.ReadFromJsonAsync<string[]>(JsonOpts))!);
     }
 
     [Fact]
@@ -148,6 +147,6 @@ public class EditorSettingsApiTests
 
         var response = await app.GetTestClient().PostAsJsonAsync("/translations/api/GetTranslations", new { });
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }

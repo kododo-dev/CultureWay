@@ -1,5 +1,4 @@
 using System.Globalization;
-using FluentAssertions;
 using Kododo.CultureWay.UI;
 using Microsoft.AspNetCore.Builder;
 using Xunit;
@@ -21,8 +20,8 @@ public class RequestLocalizationSyncTests
 
         RequestLocalizationSync.Sync(options, ["fr"]);
 
-        options.SupportedCultures!.Select(c => c.Name).Should().BeEquivalentTo(["en", "fr"]);
-        options.SupportedUICultures!.Select(c => c.Name).Should().BeEquivalentTo(["en", "fr"]);
+        Assert.Equivalent(new[] { "en", "fr" }, options.SupportedCultures!.Select(c => c.Name), strict: true);
+        Assert.Equivalent(new[] { "en", "fr" }, options.SupportedUICultures!.Select(c => c.Name), strict: true);
     }
 
     [Fact]
@@ -32,8 +31,8 @@ public class RequestLocalizationSyncTests
 
         RequestLocalizationSync.Sync(options, ["pl", "pl"]);
 
-        options.SupportedCultures!.Count(c => c.Name == "pl").Should().Be(1);
-        options.SupportedUICultures!.Count(c => c.Name == "pl").Should().Be(1);
+        Assert.Equal(1, options.SupportedCultures!.Count(c => c.Name == "pl"));
+        Assert.Equal(1, options.SupportedUICultures!.Count(c => c.Name == "pl"));
     }
 
     [Fact]
@@ -41,10 +40,8 @@ public class RequestLocalizationSyncTests
     {
         var options = OptionsWith("en");
 
-        var act = () => RequestLocalizationSync.Sync(options, ["not-a-culture-!!", "de"]);
-
-        act.Should().NotThrow();
-        options.SupportedCultures!.Select(c => c.Name).Should().BeEquivalentTo(["en", "de"]);
+        RequestLocalizationSync.Sync(options, ["not-a-culture-!!", "de"]);
+        Assert.Equivalent(new[] { "en", "de" }, options.SupportedCultures!.Select(c => c.Name), strict: true);
     }
 
     [Fact]
@@ -52,9 +49,7 @@ public class RequestLocalizationSyncTests
     {
         var options = new RequestLocalizationOptions { SupportedCultures = null, SupportedUICultures = null };
 
-        var act = () => RequestLocalizationSync.Sync(options, ["fr"]);
-
-        act.Should().NotThrow();
+        RequestLocalizationSync.Sync(options, ["fr"]);
     }
 
     [Fact]
@@ -64,8 +59,8 @@ public class RequestLocalizationSyncTests
 
         RequestLocalizationSync.Remove(options, "fr");
 
-        options.SupportedCultures!.Select(c => c.Name).Should().Equal("en");
-        options.SupportedUICultures!.Select(c => c.Name).Should().Equal("en");
+        Assert.Equal(new[] { "en" }, options.SupportedCultures!.Select(c => c.Name));
+        Assert.Equal(new[] { "en" }, options.SupportedUICultures!.Select(c => c.Name));
     }
 
     [Fact]
@@ -75,7 +70,7 @@ public class RequestLocalizationSyncTests
 
         RequestLocalizationSync.Remove(options, "PL");
 
-        options.SupportedCultures!.Select(c => c.Name).Should().Equal("en");
+        Assert.Equal(new[] { "en" }, options.SupportedCultures!.Select(c => c.Name));
     }
 
     [Fact]
@@ -85,8 +80,8 @@ public class RequestLocalizationSyncTests
 
         RequestLocalizationSync.Remove(options, "de");
 
-        options.SupportedCultures!.Select(c => c.Name).Should().BeEquivalentTo(["en", "pl"]);
-        options.SupportedUICultures!.Select(c => c.Name).Should().BeEquivalentTo(["en", "pl"]);
+        Assert.Equivalent(new[] { "en", "pl" }, options.SupportedCultures!.Select(c => c.Name), strict: true);
+        Assert.Equivalent(new[] { "en", "pl" }, options.SupportedUICultures!.Select(c => c.Name), strict: true);
     }
 
     [Fact]
@@ -94,8 +89,6 @@ public class RequestLocalizationSyncTests
     {
         var options = new RequestLocalizationOptions { SupportedCultures = null, SupportedUICultures = null };
 
-        var act = () => RequestLocalizationSync.Remove(options, "en");
-
-        act.Should().NotThrow();
+        RequestLocalizationSync.Remove(options, "en");
     }
 }

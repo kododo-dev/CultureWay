@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Store;
 using Xunit;
@@ -13,7 +12,7 @@ public class InMemoryStoreTests
     public async Task GetAll_WhenEmpty_ReturnsEmptyList()
     {
         var result = await _store.GetAllAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -26,9 +25,9 @@ public class InMemoryStoreTests
 
         var result = await _store.GetAllAsync();
 
-        result.Should().HaveCount(2);
-        result.Should().Contain(t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello");
-        result.Should().Contain(t => t.Key == "Hello" && t.Culture == "pl" && t.Value == "Cześć");
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello");
+        Assert.Contains(result, t => t.Key == "Hello" && t.Culture == "pl" && t.Value == "Cześć");
     }
 
     [Fact]
@@ -39,8 +38,8 @@ public class InMemoryStoreTests
 
         var result = await _store.GetAllAsync();
 
-        result.Should().ContainSingle();
-        result.Single().Value.Should().Be("NewValue");
+        Assert.Single(result);
+        Assert.Equal("NewValue", result.Single().Value);
     }
 
     [Fact]
@@ -53,7 +52,7 @@ public class InMemoryStoreTests
         ]);
 
         var result = await _store.GetAllAsync();
-        result.Should().HaveCount(3);
+        Assert.Equal(3, result.Count());
     }
 
     [Fact]
@@ -64,7 +63,7 @@ public class InMemoryStoreTests
         await _store.SetAsync([new Translation("Key", "en", "C")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle(t => t.Key == "Key" && t.Culture == "en");
+        Assert.Single(result, t => t.Key == "Key" && t.Culture == "en");
     }
 
     [Fact]
@@ -77,7 +76,7 @@ public class InMemoryStoreTests
         await _store.SetAsync(translations);
 
         var result = await _store.GetAllAsync();
-        result.Should().HaveCount(5);
+        Assert.Equal(5, result.Count());
     }
 
     [Fact]
@@ -86,7 +85,7 @@ public class InMemoryStoreTests
         await _store.SetAsync([]);
 
         var result = await _store.GetAllAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -100,7 +99,7 @@ public class InMemoryStoreTests
         await _store.DeleteAsync([("Hello", "en")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle(t => t.Culture == "pl");
+        Assert.Single(result, t => t.Culture == "pl");
     }
 
     [Fact]
@@ -111,7 +110,7 @@ public class InMemoryStoreTests
         await _store.DeleteAsync([("NonExisting", "en")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -122,7 +121,7 @@ public class InMemoryStoreTests
         await _store.DeleteAsync([]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -136,7 +135,7 @@ public class InMemoryStoreTests
         await _store.DeleteAsync([("A", "en"), ("B", "en")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -150,21 +149,20 @@ public class InMemoryStoreTests
         await _store.DeleteAsync([("Remove", "en")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle(t => t.Key == "Keep");
+        Assert.Single(result, t => t.Key == "Keep");
     }
 
     [Fact]
     public async Task InitializeAsync_AlwaysCompletes()
     {
-        var act = async () => await _store.InitializeAsync();
-        await act.Should().NotThrowAsync();
+        await _store.InitializeAsync();
     }
 
     [Fact]
     public async Task GetSupportedCultures_WhenEmpty_ReturnsEmptyList()
     {
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -174,7 +172,7 @@ public class InMemoryStoreTests
 
         var result = await _store.GetSupportedCulturesAsync();
 
-        result.Should().ContainSingle().Which.Should().Be("fr");
+        Assert.Equal("fr", Assert.Single(result));
     }
 
     [Fact]
@@ -185,7 +183,7 @@ public class InMemoryStoreTests
 
         var result = await _store.GetSupportedCulturesAsync();
 
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -196,7 +194,7 @@ public class InMemoryStoreTests
 
         var result = await _store.GetSupportedCulturesAsync();
 
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -208,7 +206,7 @@ public class InMemoryStoreTests
 
         var result = await _store.GetSupportedCulturesAsync();
 
-        result.Should().BeEquivalentTo(["fr", "it", "es"]);
+        Assert.Equivalent(new[] { "fr", "it", "es" }, result, strict: true);
     }
 
     [Fact]
@@ -219,7 +217,7 @@ public class InMemoryStoreTests
         await _store.RemoveSupportedCultureAsync("fr");
 
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -227,11 +225,10 @@ public class InMemoryStoreTests
     {
         await _store.AddSupportedCultureAsync("fr");
 
-        var act = async () => await _store.RemoveSupportedCultureAsync("it");
-        await act.Should().NotThrowAsync();
+        await _store.RemoveSupportedCultureAsync("it");
 
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -242,7 +239,7 @@ public class InMemoryStoreTests
         await _store.RemoveSupportedCultureAsync("FR");
 
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -254,14 +251,14 @@ public class InMemoryStoreTests
         await _store.RemoveSupportedCultureAsync("fr");
 
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().ContainSingle().Which.Should().Be("it");
+        Assert.Equal("it", Assert.Single(result));
     }
 
     [Fact]
     public async Task GetDefaultCulture_WhenNotSet_ReturnsNull()
     {
         var result = await _store.GetDefaultCultureAsync();
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -270,7 +267,7 @@ public class InMemoryStoreTests
         await _store.SetDefaultCultureAsync("pl");
 
         var result = await _store.GetDefaultCultureAsync();
-        result.Should().Be("pl");
+        Assert.Equal("pl", result);
     }
 
     [Fact]
@@ -280,6 +277,6 @@ public class InMemoryStoreTests
         await _store.SetDefaultCultureAsync("de");
 
         var result = await _store.GetDefaultCultureAsync();
-        result.Should().Be("de");
+        Assert.Equal("de", result);
     }
 }

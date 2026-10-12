@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.UI.API.GetTranslations;
@@ -18,7 +17,7 @@ public class GetTranslationsHandlerTests
 
         var result = await handler.HandleAsync(new GetTranslations(), CancellationToken.None);
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -34,9 +33,9 @@ public class GetTranslationsHandlerTests
 
         var result = await handler.HandleAsync(new GetTranslations(), CancellationToken.None);
 
-        result.Should().HaveCount(2);
-        result.Should().Contain(t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello World");
-        result.Should().Contain(t => t.Key == "Hello" && t.Culture == "pl" && t.Value == "Witaj Świecie");
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello World");
+        Assert.Contains(result, t => t.Key == "Hello" && t.Culture == "pl" && t.Value == "Witaj Świecie");
     }
 
     [Fact]
@@ -54,12 +53,14 @@ public class GetTranslationsHandlerTests
 
         var result = await handler.HandleAsync(new GetTranslations(), CancellationToken.None);
 
-        result.Select(t => (t.Key, t.Culture)).Should().Equal(
-            ("Apple", "en"),
-            ("Apple", "pl"),
-            ("Banana", "en"),
-            ("Zebra", "pl")
-        );
+        Assert.Equal(
+            [
+                ("Apple", "en"),
+                ("Apple", "pl"),
+                ("Banana", "en"),
+                ("Zebra", "pl"),
+            ],
+            result.Select(t => (t.Key, t.Culture)));
     }
 
     [Fact]
@@ -75,6 +76,6 @@ public class GetTranslationsHandlerTests
 
         var result = await handler.HandleAsync(new GetTranslations(), CancellationToken.None);
 
-        result.Should().HaveCount(2);
+        Assert.Equal(2, result.Count());
     }
 }

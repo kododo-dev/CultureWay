@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Localization;
 using Xunit;
@@ -14,8 +13,8 @@ public class TranslationCacheTests
     {
         var found = _cache.TryGetValue("Key", "en", out var value);
 
-        found.Should().BeFalse();
-        value.Should().BeNull();
+        Assert.False(found);
+        Assert.Null(value);
     }
 
     [Fact]
@@ -25,8 +24,8 @@ public class TranslationCacheTests
 
         var found = _cache.TryGetValue("Hello", "en", out var value);
 
-        found.Should().BeTrue();
-        value.Should().Be("Hello World");
+        Assert.True(found);
+        Assert.Equal("Hello World", value);
     }
 
     [Fact]
@@ -34,7 +33,7 @@ public class TranslationCacheTests
     {
         _cache.Load([new Translation("Hello", "en", "Hello World")]);
 
-        _cache.TryGetValue("Hello", "pl", out _).Should().BeFalse();
+        Assert.False(_cache.TryGetValue("Hello", "pl", out _));
     }
 
     [Fact]
@@ -42,7 +41,7 @@ public class TranslationCacheTests
     {
         _cache.Load([new Translation("Hello", "en", "Hello World")]);
 
-        _cache.TryGetValue("Goodbye", "en", out _).Should().BeFalse();
+        Assert.False(_cache.TryGetValue("Goodbye", "en", out _));
     }
 
     [Fact]
@@ -53,7 +52,7 @@ public class TranslationCacheTests
 
         _cache.TryGetValue("Key", "en", out var value);
 
-        value.Should().Be("SecondValue");
+        Assert.Equal("SecondValue", value);
     }
 
     [Fact]
@@ -62,7 +61,7 @@ public class TranslationCacheTests
         _cache.Load([new Translation("Key", "en", "Value")]);
         _cache.Load([]);
 
-        _cache.TryGetValue("Key", "en", out _).Should().BeFalse();
+        Assert.False(_cache.TryGetValue("Key", "en", out _));
     }
 
     [Fact]
@@ -73,13 +72,13 @@ public class TranslationCacheTests
             new Translation("A", "pl", "pl-A"),
         ]);
 
-        _cache.GetAll().Should().HaveCount(2);
+        Assert.Equal(2, _cache.GetAll().Count());
     }
 
     [Fact]
     public void GetAll_BeforeLoad_ReturnsEmpty()
     {
-        _cache.GetAll().Should().BeEmpty();
+        Assert.Empty(_cache.GetAll());
     }
 
     [Fact]
@@ -89,8 +88,8 @@ public class TranslationCacheTests
 
         var result = _cache.GetAll().Single();
 
-        result.Key.Should().Be("Title");
-        result.Culture.Should().Be("pl");
-        result.Value.Should().Be("Tytuł");
+        Assert.Equal("Title", result.Key);
+        Assert.Equal("pl", result.Culture);
+        Assert.Equal("Tytuł", result.Value);
     }
 }

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using FluentAssertions;
 using Kododo.CultureWay.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -51,7 +50,7 @@ public class TranslationsApiTests : IAsyncLifetime
     public async Task GetCultures_Returns200()
     {
         var response = await _client.PostAsJsonAsync("/translations/api/GetCultures", new { });
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
@@ -59,8 +58,8 @@ public class TranslationsApiTests : IAsyncLifetime
     {
         var cultures = await FetchCultures();
 
-        cultures.Should().HaveCount(3);
-        cultures.Select(c => c.Code).Should().BeEquivalentTo("en", "pl", "de");
+        Assert.Equal(3, cultures.Count());
+        Assert.Equivalent(new[] { "en", "pl", "de" }, cultures.Select(c => c.Code), strict: true);
     }
 
     [Fact]
@@ -68,7 +67,7 @@ public class TranslationsApiTests : IAsyncLifetime
     {
         var cultures = await FetchCultures();
 
-        cultures.Single(c => c.Code == "en").IsDefault.Should().BeTrue();
+        Assert.True(cultures.Single(c => c.Code == "en").IsDefault);
     }
 
     [Fact]
@@ -76,8 +75,7 @@ public class TranslationsApiTests : IAsyncLifetime
     {
         var cultures = await FetchCultures();
 
-        cultures.Where(c => c.Code != "en")
-                .Should().AllSatisfy(c => c.IsDefault.Should().BeFalse());
+        Assert.All(cultures.Where(c => c.Code != "en"), c => Assert.False(c.IsDefault));
     }
 
     // ── AddCulture ─────────────────────────────────────────────────────
@@ -87,9 +85,9 @@ public class TranslationsApiTests : IAsyncLifetime
     {
         var response = await PostAddCulture("fr");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().BeEmpty();
+        Assert.Empty(errors!);
     }
 
     [Fact]
@@ -99,7 +97,7 @@ public class TranslationsApiTests : IAsyncLifetime
 
         var cultures = await FetchCultures();
 
-        cultures.Select(c => c.Code).Should().Contain("fr");
+        Assert.Contains("fr", cultures.Select(c => c.Code));
     }
 
     [Fact]
@@ -110,7 +108,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostUpdate(translations: [("Key", "fr", "Bonjour")]);
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().BeEmpty();
+        Assert.Empty(errors!);
     }
 
     [Fact]
@@ -119,7 +117,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostAddCulture("en");
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle();
+        Assert.Single(errors!);
     }
 
     [Fact]
@@ -128,7 +126,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostAddCulture("not-a-culture-!!");
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle();
+        Assert.Single(errors!);
     }
 
     // ── DeleteCulture ──────────────────────────────────────────────────
@@ -140,9 +138,9 @@ public class TranslationsApiTests : IAsyncLifetime
 
         var response = await PostDeleteCulture("fr");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().BeEmpty();
+        Assert.Empty(errors!);
     }
 
     [Fact]
@@ -153,7 +151,7 @@ public class TranslationsApiTests : IAsyncLifetime
         await PostDeleteCulture("fr");
 
         var cultures = await FetchCultures();
-        cultures.Select(c => c.Code).Should().NotContain("fr");
+        Assert.DoesNotContain("fr", cultures.Select(c => c.Code));
     }
 
     [Fact]
@@ -165,8 +163,8 @@ public class TranslationsApiTests : IAsyncLifetime
         await PostDeleteCulture("fr");
 
         var translations = await FetchTranslations();
-        translations.Should().NotContain(t => t.Culture == "fr");
-        translations.Should().Contain(t => t.Culture == "en");
+        Assert.DoesNotContain(translations, t => t.Culture == "fr");
+        Assert.Contains(translations, t => t.Culture == "en");
     }
 
     [Fact]
@@ -175,10 +173,10 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostDeleteCulture("en");
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle();
+        Assert.Single(errors!);
 
         var cultures = await FetchCultures();
-        cultures.Select(c => c.Code).Should().Contain("en");
+        Assert.Contains("en", cultures.Select(c => c.Code));
     }
 
     [Fact]
@@ -187,7 +185,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostDeleteCulture("fr");
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle();
+        Assert.Single(errors!);
     }
 
     // ── SetDefaultCulture ──────────────────────────────────────────────
@@ -197,9 +195,9 @@ public class TranslationsApiTests : IAsyncLifetime
     {
         var response = await PostSetDefaultCulture("pl");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().BeEmpty();
+        Assert.Empty(errors!);
     }
 
     [Fact]
@@ -209,8 +207,8 @@ public class TranslationsApiTests : IAsyncLifetime
 
         var cultures = await FetchCultures();
 
-        cultures.Single(c => c.Code == "pl").IsDefault.Should().BeTrue();
-        cultures.Single(c => c.Code == "en").IsDefault.Should().BeFalse();
+        Assert.True(cultures.Single(c => c.Code == "pl").IsDefault);
+        Assert.False(cultures.Single(c => c.Code == "en").IsDefault);
     }
 
     [Fact]
@@ -219,7 +217,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostSetDefaultCulture("fr");
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle();
+        Assert.Single(errors!);
     }
 
     // ── GetTranslations ────────────────────────────────────────────────
@@ -228,14 +226,14 @@ public class TranslationsApiTests : IAsyncLifetime
     public async Task GetTranslations_InitiallyEmpty_Returns200()
     {
         var response = await _client.PostAsJsonAsync("/translations/api/GetTranslations", new { });
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task GetTranslations_InitiallyEmpty_ReturnsEmptyArray()
     {
         var translations = await FetchTranslations();
-        translations.Should().BeEmpty();
+        Assert.Empty(translations);
     }
 
     // ── UpdateTranslations ─────────────────────────────────────────────
@@ -246,9 +244,9 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostUpdate(
             translations: [("Hello", "en", "Hello World")]);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().BeEmpty();
+        Assert.Empty(errors!);
     }
 
     [Fact]
@@ -258,7 +256,7 @@ public class TranslationsApiTests : IAsyncLifetime
 
         var translations = await FetchTranslations();
 
-        translations.Should().Contain(t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello World");
+        Assert.Contains(translations, t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello World");
     }
 
     [Fact]
@@ -273,7 +271,7 @@ public class TranslationsApiTests : IAsyncLifetime
 
         var translations = await FetchTranslations();
 
-        translations.Should().HaveCount(3);
+        Assert.Equal(3, translations.Count());
     }
 
     [Fact]
@@ -284,7 +282,7 @@ public class TranslationsApiTests : IAsyncLifetime
 
         var translations = await FetchTranslations();
 
-        translations.Single(t => t.Key == "Key" && t.Culture == "en").Value.Should().Be("Second");
+        Assert.Equal("Second", translations.Single(t => t.Key == "Key" && t.Culture == "en").Value);
     }
 
     [Fact]
@@ -299,7 +297,7 @@ public class TranslationsApiTests : IAsyncLifetime
         await PostUpdate(translations: [("A", "en", "A-en-updated")]);
 
         var translations = await FetchTranslations();
-        translations.Should().Contain(t => t.Key == "B" && t.Culture == "en" && t.Value == "B-en");
+        Assert.Contains(translations, t => t.Key == "B" && t.Culture == "en" && t.Value == "B-en");
     }
 
     [Fact]
@@ -314,8 +312,8 @@ public class TranslationsApiTests : IAsyncLifetime
         await PostUpdate(keysToDelete: [("Remove", "en")]);
 
         var translations = await FetchTranslations();
-        translations.Should().NotContain(t => t.Key == "Remove");
-        translations.Should().Contain(t => t.Key == "Keep");
+        Assert.DoesNotContain(translations, t => t.Key == "Remove");
+        Assert.Contains(translations, t => t.Key == "Keep");
     }
 
     [Fact]
@@ -330,8 +328,8 @@ public class TranslationsApiTests : IAsyncLifetime
         await PostUpdate(keysToDelete: [("Hello", "en")]);
 
         var translations = await FetchTranslations();
-        translations.Should().NotContain(t => t.Key == "Hello" && t.Culture == "en");
-        translations.Should().Contain(t => t.Key == "Hello" && t.Culture == "pl");
+        Assert.DoesNotContain(translations, t => t.Key == "Hello" && t.Culture == "en");
+        Assert.Contains(translations, t => t.Key == "Hello" && t.Culture == "pl");
     }
 
     // ── Validation ─────────────────────────────────────────────────────
@@ -342,7 +340,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostUpdate(translations: [("Key", "fr", "Bonjour")]);
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle(e => e.Contains("fr") && e.Contains("SupportedCultures"));
+        Assert.Single(errors!, e => e.Contains("fr") && e.Contains("SupportedCultures"));
     }
 
     [Fact]
@@ -351,7 +349,7 @@ public class TranslationsApiTests : IAsyncLifetime
         await PostUpdate(translations: [("Key", "fr", "Bonjour")]);
 
         var translations = await FetchTranslations();
-        translations.Should().BeEmpty();
+        Assert.Empty(translations);
     }
 
     [Fact]
@@ -360,7 +358,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostUpdate(translations: [("", "en", "Value")]);
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle(e => e.Contains("key") && e.Contains("empty"));
+        Assert.Single(errors!, e => e.Contains("key") && e.Contains("empty"));
     }
 
     [Fact]
@@ -369,7 +367,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostUpdate(translations: [("Key", "", "Value")]);
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle();
+        Assert.Single(errors!);
     }
 
     [Fact]
@@ -382,7 +380,7 @@ public class TranslationsApiTests : IAsyncLifetime
         ]);
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().HaveCount(2);
+        Assert.Equal(2, errors!.Count());
     }
 
     [Fact]
@@ -391,7 +389,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostUpdate(keysToDelete: [("", "en")]);
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle();
+        Assert.Single(errors!);
     }
 
     [Fact]
@@ -400,7 +398,7 @@ public class TranslationsApiTests : IAsyncLifetime
         var response = await PostUpdate(keysToDelete: [("Key", "")]);
 
         var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        errors.Should().ContainSingle();
+        Assert.Single(errors!);
     }
 
     // ── helpers ────────────────────────────────────────────────────────

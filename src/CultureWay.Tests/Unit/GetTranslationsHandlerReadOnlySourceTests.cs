@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.UI.API.GetTranslations;
@@ -33,12 +32,12 @@ public class GetTranslationsHandlerReadOnlySourceTests
     {
         var result = await Handle(StoreWith(), SourceWith(new Translation("Title", "en", "Hello")));
 
-        var dto = result.Should().ContainSingle().Subject;
-        dto.Key.Should().Be("Title");
-        dto.Culture.Should().Be("en");
-        dto.Value.Should().Be("Hello");
-        dto.HasExternalDefault.Should().BeTrue();
-        dto.ExternalDefaultValue.Should().Be("Hello");
+        var dto = Assert.Single(result);
+        Assert.Equal("Title", dto.Key);
+        Assert.Equal("en", dto.Culture);
+        Assert.Equal("Hello", dto.Value);
+        Assert.True(dto.HasExternalDefault);
+        Assert.Equal("Hello", dto.ExternalDefaultValue);
     }
 
     [Fact]
@@ -46,10 +45,10 @@ public class GetTranslationsHandlerReadOnlySourceTests
     {
         var result = await Handle(StoreWith(new Translation("Title", "en", "Stored")), SourceWith());
 
-        var dto = result.Should().ContainSingle().Subject;
-        dto.Value.Should().Be("Stored");
-        dto.HasExternalDefault.Should().BeFalse();
-        dto.ExternalDefaultValue.Should().BeNull();
+        var dto = Assert.Single(result);
+        Assert.Equal("Stored", dto.Value);
+        Assert.False(dto.HasExternalDefault);
+        Assert.Null(dto.ExternalDefaultValue);
     }
 
     [Fact]
@@ -59,10 +58,10 @@ public class GetTranslationsHandlerReadOnlySourceTests
             StoreWith(new Translation("Title", "en", "Overridden")),
             SourceWith(new Translation("Title", "en", "Original")));
 
-        var dto = result.Should().ContainSingle().Subject;
-        dto.Value.Should().Be("Overridden");
-        dto.HasExternalDefault.Should().BeTrue();
-        dto.ExternalDefaultValue.Should().Be("Original");
+        var dto = Assert.Single(result);
+        Assert.Equal("Overridden", dto.Value);
+        Assert.True(dto.HasExternalDefault);
+        Assert.Equal("Original", dto.ExternalDefaultValue);
     }
 
     [Fact]
@@ -72,9 +71,9 @@ public class GetTranslationsHandlerReadOnlySourceTests
             StoreWith(new Translation("Title", "PL", "Nadpisane")),
             SourceWith(new Translation("Title", "pl", "Oryginal")));
 
-        var dto = result.Should().ContainSingle().Subject;
-        dto.Value.Should().Be("Nadpisane");
-        dto.ExternalDefaultValue.Should().Be("Oryginal");
+        var dto = Assert.Single(result);
+        Assert.Equal("Nadpisane", dto.Value);
+        Assert.Equal("Oryginal", dto.ExternalDefaultValue);
     }
 
     [Fact]
@@ -84,9 +83,9 @@ public class GetTranslationsHandlerReadOnlySourceTests
             StoreWith(new Translation("title", "en", "Stored")),
             SourceWith(new Translation("Title", "en", "Original")));
 
-        result.Should().HaveCount(2);
-        result.Single(t => t.Key == "title").HasExternalDefault.Should().BeFalse();
-        result.Single(t => t.Key == "Title").HasExternalDefault.Should().BeTrue();
+        Assert.Equal(2, result.Count());
+        Assert.False(result.Single(t => t.Key == "title").HasExternalDefault);
+        Assert.True(result.Single(t => t.Key == "Title").HasExternalDefault);
     }
 
     [Fact]
@@ -97,7 +96,7 @@ public class GetTranslationsHandlerReadOnlySourceTests
             SourceWith(new Translation("Title", "en", "First")),
             SourceWith(new Translation("Title", "en", "Second")));
 
-        result.Should().ContainSingle().Which.Value.Should().Be("First");
+        Assert.Equal("First", Assert.Single(result).Value);
     }
 
     [Fact]
@@ -110,10 +109,10 @@ public class GetTranslationsHandlerReadOnlySourceTests
                 new Translation("A", "pl", "a-pl-src"),
                 new Translation("B", "en", "b-en-src")));
 
-        result.Should().HaveCount(3);
-        result.Single(t => t.Key == "A" && t.Culture == "en").Value.Should().Be("a-en-store");
-        result.Single(t => t.Key == "A" && t.Culture == "pl").Value.Should().Be("a-pl-src");
-        result.Single(t => t.Key == "B" && t.Culture == "en").HasExternalDefault.Should().BeTrue();
+        Assert.Equal(3, result.Count());
+        Assert.Equal("a-en-store", result.Single(t => t.Key == "A" && t.Culture == "en").Value);
+        Assert.Equal("a-pl-src", result.Single(t => t.Key == "A" && t.Culture == "pl").Value);
+        Assert.True(result.Single(t => t.Key == "B" && t.Culture == "en").HasExternalDefault);
     }
 
     [Fact]
@@ -123,7 +122,8 @@ public class GetTranslationsHandlerReadOnlySourceTests
             StoreWith(new Translation("b", "pl", "1"), new Translation("a", "pl", "2")),
             SourceWith(new Translation("b", "en", "3"), new Translation("a", "en", "4")));
 
-        result.Select(t => (t.Key, t.Culture)).Should().Equal(
-            ("a", "en"), ("a", "pl"), ("b", "en"), ("b", "pl"));
+        Assert.Equal(
+            [("a", "en"), ("a", "pl"), ("b", "en"), ("b", "pl")],
+            result.Select(t => (t.Key, t.Culture)));
     }
 }

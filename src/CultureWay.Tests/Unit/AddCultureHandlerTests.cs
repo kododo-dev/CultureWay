@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.UI.API.AddCulture;
 using Microsoft.AspNetCore.Builder;
@@ -24,7 +23,7 @@ public class AddCultureHandlerTests
 
         await handler.HandleAsync(new AddCulture("fr"), CancellationToken.None);
 
-        options.SupportedCultures.Should().Contain("fr");
+        Assert.Contains("fr", options.SupportedCultures);
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public class AddCultureHandlerTests
 
         var result = await handler.HandleAsync(new AddCulture("fr"), CancellationToken.None);
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -59,8 +58,8 @@ public class AddCultureHandlerTests
 
         await handler.HandleAsync(new AddCulture("fr"), CancellationToken.None);
 
-        requestLocalizationOptions.SupportedCultures.Should().Contain(c => c.Name == "fr");
-        requestLocalizationOptions.SupportedUICultures.Should().Contain(c => c.Name == "fr");
+        Assert.Contains(requestLocalizationOptions.SupportedCultures!, c => c.Name == "fr");
+        Assert.Contains(requestLocalizationOptions.SupportedUICultures!, c => c.Name == "fr");
     }
 
     [Fact]
@@ -71,8 +70,8 @@ public class AddCultureHandlerTests
 
         var result = await handler.HandleAsync(new AddCulture(""), CancellationToken.None);
 
-        result.Should().ContainSingle();
-        options.SupportedCultures.Should().NotContain("");
+        Assert.Single(result);
+        Assert.DoesNotContain("", options.SupportedCultures);
     }
 
     [Fact]
@@ -83,8 +82,8 @@ public class AddCultureHandlerTests
 
         var result = await handler.HandleAsync(new AddCulture("not-a-culture-!!"), CancellationToken.None);
 
-        result.Should().ContainSingle();
-        options.SupportedCultures.Should().NotContain("not-a-culture-!!");
+        Assert.Single(result);
+        Assert.DoesNotContain("not-a-culture-!!", options.SupportedCultures);
     }
 
     [Fact]
@@ -95,7 +94,7 @@ public class AddCultureHandlerTests
 
         var result = await handler.HandleAsync(new AddCulture("fr"), CancellationToken.None);
 
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -106,7 +105,7 @@ public class AddCultureHandlerTests
 
         var result = await handler.HandleAsync(new AddCulture("FR"), CancellationToken.None);
 
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]

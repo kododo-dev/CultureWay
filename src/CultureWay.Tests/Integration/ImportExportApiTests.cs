@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.UI;
@@ -109,7 +108,7 @@ public class ImportExportApiTests
     private static async Task<T> Call<T>(HttpClient client, string request, object body)
     {
         var response = await Post(client, request, body);
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<T>(JsonOpts))!;
     }
 
@@ -130,16 +129,17 @@ public class ImportExportApiTests
 
         var file = await Call<ExportFileDto>(app.Client, "ExportTranslations", new { format = "json", cultures = new[] { "pl" } });
 
-        file.Error.Should().BeNull();
-        file.FileName.Should().Be("translations-pl.json");
-        file.ContentType.Should().Be("application/json");
+        Assert.Null(file.Error);
+        Assert.Equal("translations-pl.json", file.FileName);
+        Assert.Equal("application/json", file.ContentType);
         var json = Encoding.UTF8.GetString(Convert.FromBase64String(file.ContentBase64));
-        JsonSerializer.Deserialize<Dictionary<string, string>>(json).Should().Equal(new Dictionary<string, string>
+        Assert.Equal(new Dictionary<string, string>
         {
             ["Checkout.Pay"] = "Zapłać",
             ["Common.Save"] = "Zapisz",
-        });
-        json.Should().Contain("Zapłać", "non-Latin text stays readable");
+        }, JsonSerializer.Deserialize<Dictionary<string, string>>(json));
+        // Non-Latin text stays readable.
+        Assert.Contains("Zapłać", json);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public class ImportExportApiTests
 
         var file = await Call<ExportFileDto>(app.Client, "ExportTranslations", new { format = "json", cultures = Array.Empty<string>() });
 
-        file.Error.Should().Contain("exactly one language");
+        Assert.Contains("exactly one language", file.Error);
     }
 
     [Fact]
@@ -161,11 +161,11 @@ public class ImportExportApiTests
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport",
             Import(file.FileName, Convert.FromBase64String(file.ContentBase64)));
 
-        file.FileName.Should().Be("translations.xlsx");
-        preview.Error.Should().BeNull();
-        preview.Changes.Should().BeEmpty();
-        preview.Unchanged.Should().Be(Seed.Length);
-        preview.Problems.Should().BeEmpty();
+        Assert.Equal("translations.xlsx", file.FileName);
+        Assert.Null(preview.Error);
+        Assert.Empty(preview.Changes);
+        Assert.Equal(Seed.Length, preview.Unchanged);
+        Assert.Empty(preview.Problems);
     }
 
     [Fact]
@@ -176,12 +176,12 @@ public class ImportExportApiTests
         var file = await Call<ExportFileDto>(app.Client, "ExportTranslations",
             new { format = "json", cultures = new[] { "en" }, @namespace = "Checkout", missingIn = "pl" });
 
-        file.FileName.Should().Be("translations-en-Checkout-missing-pl.json");
+        Assert.Equal("translations-en-Checkout-missing-pl.json", file.FileName);
         var json = Encoding.UTF8.GetString(Convert.FromBase64String(file.ContentBase64));
-        JsonSerializer.Deserialize<Dictionary<string, string>>(json).Should().Equal(new Dictionary<string, string>
+        Assert.Equal(new Dictionary<string, string>
         {
             ["Checkout.Pay.Tooltip"] = "You will be redirected",
-        });
+        }, JsonSerializer.Deserialize<Dictionary<string, string>>(json));
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class ImportExportApiTests
             new { format = "json", cultures = new[] { "en" }, @namespace = "" });
 
         var json = Encoding.UTF8.GetString(Convert.FromBase64String(file.ContentBase64));
-        JsonSerializer.Deserialize<Dictionary<string, string>>(json).Should().ContainSingle().Which.Key.Should().Be("Title");
+        Assert.Equal("Title", Assert.Single(JsonSerializer.Deserialize<Dictionary<string, string>>(json)!).Key);
     }
 
     [Fact]
@@ -203,8 +203,8 @@ public class ImportExportApiTests
 
         var file = await Call<ExportFileDto>(app.Client, "ExportTranslations", new { format = "xlsx", cultures = new[] { "fr" } });
 
-        file.Error.Should().Contain("'fr'");
-        file.ContentBase64.Should().BeEmpty();
+        Assert.Contains("'fr'", file.Error);
+        Assert.Empty(file.ContentBase64);
     }
 
     // ── Preview ────────────────────────────────────────────────────────
@@ -218,14 +218,14 @@ public class ImportExportApiTests
             { "Checkout.Pay": "Zapłać teraz", "Common.Save": "Zapisz", "Title": "Sklep" }
             """), culture: "pl"));
 
-        preview.Error.Should().BeNull();
-        preview.Changes.Should().BeEquivalentTo(new[]
+        Assert.Null(preview.Error);
+        Assert.Equivalent(new[]
         {
             new ImportChangeDto("Checkout.Pay", "pl", "Zapłać", "Zapłać teraz"),
             new ImportChangeDto("Title", "pl", null, "Sklep"),
-        });
-        preview.Unchanged.Should().Be(1);
-        app.Store.SetCalls.Should().Be(0);
+        }, preview.Changes, strict: true);
+        Assert.Equal(1, preview.Unchanged);
+        Assert.Equal(0, app.Store.SetCalls);
     }
 
     [Fact]
@@ -237,9 +237,9 @@ public class ImportExportApiTests
             { "Checkout": { "Pay": "Pay" }, "Count": 3, "Empty": null, "Title": "Store" }
             """), culture: "en"));
 
-        preview.Changes.Should().ContainSingle().Which.Key.Should().Be("Title");
-        preview.Problems.Select(p => p.Location).Should().BeEquivalentTo("Checkout", "Count", "Empty");
-        preview.Problems.Single(p => p.Location == "Checkout").Reason.Should().Contain("Nested objects");
+        Assert.Equal("Title", Assert.Single(preview.Changes).Key);
+        Assert.Equivalent(new[] { "Checkout", "Count", "Empty" }, preview.Problems.Select(p => p.Location), strict: true);
+        Assert.Contains("Nested objects", preview.Problems.Single(p => p.Location == "Checkout").Reason);
     }
 
     [Fact]
@@ -250,8 +250,8 @@ public class ImportExportApiTests
 
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport", Import("de.json", content, culture: "de"));
 
-        preview.Error.Should().BeNull();
-        preview.Changes.Should().ContainSingle();
+        Assert.Null(preview.Error);
+        Assert.Single(preview.Changes);
     }
 
     [Theory]
@@ -264,7 +264,7 @@ public class ImportExportApiTests
 
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport", Import(fileName, Json("{}"), culture));
 
-        preview.Error.Should().Contain(error);
+        Assert.Contains(error, preview.Error);
     }
 
     [Fact]
@@ -274,7 +274,7 @@ public class ImportExportApiTests
 
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport", Import("pl.json", Json("{ nope"), culture: "pl"));
 
-        preview.Error.Should().StartWith("The file is not valid JSON");
+        Assert.StartsWith("The file is not valid JSON", preview.Error);
     }
 
     [Fact]
@@ -286,8 +286,8 @@ public class ImportExportApiTests
 
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport", Import("t.xlsx", content));
 
-        preview.Changes.Should().ContainSingle().Which.Should().Be(new ImportChangeDto("Title", "en", "Shop", "Store"));
-        preview.UnknownCultures.Should().Equal("fr");
+        Assert.Equal(new ImportChangeDto("Title", "en", "Shop", "Store"), Assert.Single(preview.Changes));
+        Assert.Equal(new[] { "fr" }, preview.UnknownCultures);
     }
 
     [Fact]
@@ -302,13 +302,13 @@ public class ImportExportApiTests
 
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport", Import("t.xlsx", content));
 
-        preview.Changes.Should().ContainSingle().Which.NewValue.Should().Be("Store");
-        preview.Problems.Should().BeEquivalentTo(new[]
+        Assert.Equal("Store", Assert.Single(preview.Changes).NewValue);
+        Assert.Equivalent(new[]
         {
             new ImportProblemDto("Row 3", "\"Title\" (en) appears more than once. The first one is used."),
             new ImportProblemDto("Row 4", "The key \" Padded\" starts or ends with a space."),
             new ImportProblemDto("Row 5", "The key is empty."),
-        });
+        }, preview.Problems, strict: true);
     }
 
     [Fact]
@@ -322,7 +322,7 @@ public class ImportExportApiTests
 
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport", Import("t.xlsx", stream.ToArray()));
 
-        preview.Error.Should().Contain("\"key\" column");
+        Assert.Contains("\"key\" column", preview.Error);
     }
 
     [Fact]
@@ -332,7 +332,7 @@ public class ImportExportApiTests
 
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport", Import("t.xlsx", Json("not a workbook")));
 
-        preview.Error.Should().Contain("not a readable Excel workbook");
+        Assert.Contains("not a readable Excel workbook", preview.Error);
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public class ImportExportApiTests
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport",
             Import("pl.json", Json($$"""{ "Title": "{{new string('a', 200)}}" }"""), culture: "pl"));
 
-        preview.Error.Should().Be("The file is larger than 0.1 KB.");
+        Assert.Equal("The file is larger than 0.1 KB.", preview.Error);
     }
 
     // ── Apply ──────────────────────────────────────────────────────────
@@ -357,11 +357,11 @@ public class ImportExportApiTests
             { "Checkout.Pay": "Zapłać teraz", "Common.Save": "Zapisz", "Title": "Sklep" }
             """), culture: "pl"));
 
-        result.Should().Be(new ImportResultDto(null, Added: 1, Updated: 1));
-        app.Store.SetCalls.Should().Be(1);
+        Assert.Equal(new ImportResultDto(null, Added: 1, Updated: 1), result);
+        Assert.Equal(1, app.Store.SetCalls);
         var all = await app.Store.GetAllAsync();
-        all.Should().Contain(new Translation("Checkout.Pay", "pl", "Zapłać teraz"));
-        all.Should().Contain(new Translation("Title", "pl", "Sklep"));
+        Assert.Contains(new Translation("Checkout.Pay", "pl", "Zapłać teraz"), all);
+        Assert.Contains(new Translation("Title", "pl", "Sklep"), all);
     }
 
     [Fact]
@@ -373,9 +373,9 @@ public class ImportExportApiTests
         var preview = await Call<ImportPreviewDto>(app.Client, "PreviewImport", Import("pl.json", content, "pl", onlyMissing: true));
         var result = await Call<ImportResultDto>(app.Client, "ApplyImport", Import("pl.json", content, "pl", onlyMissing: true));
 
-        preview.Kept.Should().Be(1);
-        result.Should().Be(new ImportResultDto(null, Added: 1, Updated: 0));
-        (await app.Store.GetAllAsync()).Should().Contain(new Translation("Checkout.Pay", "pl", "Zapłać"));
+        Assert.Equal(1, preview.Kept);
+        Assert.Equal(new ImportResultDto(null, Added: 1, Updated: 0), result);
+        Assert.Contains(new Translation("Checkout.Pay", "pl", "Zapłać"), await app.Store.GetAllAsync());
     }
 
     [Fact]
@@ -385,8 +385,8 @@ public class ImportExportApiTests
 
         var result = await Call<ImportResultDto>(app.Client, "ApplyImport", Import("pl.json", Json("""{ "Common.Save": "Zapisz" }"""), "pl"));
 
-        result.Should().Be(new ImportResultDto(null, 0, 0));
-        app.Store.SetCalls.Should().Be(0);
+        Assert.Equal(new ImportResultDto(null, 0, 0), result);
+        Assert.Equal(0, app.Store.SetCalls);
     }
 
     [Fact]
@@ -397,7 +397,7 @@ public class ImportExportApiTests
         await Call<ImportResultDto>(app.Client, "ApplyImport", Import("de.json", Json("""{ "Title": "Laden" }"""), "de"));
         var translations = await Call<TranslationDto[]>(app.Client, "GetTranslations", new { });
 
-        translations.Should().Contain(t => t.Key == "Title" && t.Culture == "de" && t.Value == "Laden");
+        Assert.Contains(translations, t => t.Key == "Title" && t.Culture == "de" && t.Value == "Laden");
     }
 
     // ── Permission ─────────────────────────────────────────────────────
@@ -413,8 +413,8 @@ public class ImportExportApiTests
 
         var response = await Post(app.Client, request, Import("pl.json", Json("""{ "Title": "Sklep" }"""), "pl"), role: "Viewer");
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-        app.Store.SetCalls.Should().Be(0);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, app.Store.SetCalls);
     }
 
     [Fact]
@@ -425,8 +425,8 @@ public class ImportExportApiTests
         var import = await Post(app.Client, "ApplyImport", Import("pl.json", Json("""{ "Title": "Sklep" }"""), "pl"), role: "Editor");
         var export = await Post(app.Client, "ExportTranslations", new { format = "xlsx" }, role: "Viewer");
 
-        import.StatusCode.Should().Be(HttpStatusCode.OK);
-        export.StatusCode.Should().Be(HttpStatusCode.OK);
+        Assert.Equal(HttpStatusCode.OK, import.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, export.StatusCode);
     }
 
     [Fact]
@@ -440,7 +440,7 @@ public class ImportExportApiTests
 
         var viewer = await Call<EditorSettingsDto>(app.Client, "GetEditorSettings", new { });
 
-        viewer.CanImport.Should().BeFalse();
-        viewer.MaxImportBytes.Should().Be(1000);
+        Assert.False(viewer.CanImport);
+        Assert.Equal(1000, viewer.MaxImportBytes);
     }
 }

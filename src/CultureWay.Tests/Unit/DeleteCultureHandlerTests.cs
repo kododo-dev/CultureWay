@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.Localization;
@@ -28,7 +27,7 @@ public class DeleteCultureHandlerTests
 
         await handler.HandleAsync(new DeleteCulture("fr"), CancellationToken.None);
 
-        options.SupportedCultures.Should().NotContain("fr");
+        Assert.DoesNotContain("fr", options.SupportedCultures);
     }
 
     [Fact]
@@ -41,7 +40,7 @@ public class DeleteCultureHandlerTests
 
         var result = await handler.HandleAsync(new DeleteCulture("fr"), CancellationToken.None);
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -90,8 +89,8 @@ public class DeleteCultureHandlerTests
 
         await handler.HandleAsync(new DeleteCulture("fr"), CancellationToken.None);
 
-        requestLocalizationOptions.SupportedCultures.Should().NotContain(c => c.Name == "fr");
-        requestLocalizationOptions.SupportedUICultures.Should().NotContain(c => c.Name == "fr");
+        Assert.DoesNotContain(requestLocalizationOptions.SupportedCultures!, c => c.Name == "fr");
+        Assert.DoesNotContain(requestLocalizationOptions.SupportedUICultures!, c => c.Name == "fr");
     }
 
     [Fact]
@@ -102,7 +101,7 @@ public class DeleteCultureHandlerTests
 
         var result = await handler.HandleAsync(new DeleteCulture(""), CancellationToken.None);
 
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -113,7 +112,7 @@ public class DeleteCultureHandlerTests
 
         var result = await handler.HandleAsync(new DeleteCulture("de"), CancellationToken.None);
 
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -124,8 +123,8 @@ public class DeleteCultureHandlerTests
 
         var result = await handler.HandleAsync(new DeleteCulture("en"), CancellationToken.None);
 
-        result.Should().ContainSingle();
-        options.SupportedCultures.Should().Contain("en");
+        Assert.Single(result);
+        Assert.Contains("en", options.SupportedCultures);
     }
 
     [Fact]
@@ -136,8 +135,8 @@ public class DeleteCultureHandlerTests
 
         var result = await handler.HandleAsync(new DeleteCulture("en"), CancellationToken.None);
 
-        result.Should().ContainSingle();
-        options.SupportedCultures.Should().Contain("en");
+        Assert.Single(result);
+        Assert.Contains("en", options.SupportedCultures);
     }
 
     [Fact]

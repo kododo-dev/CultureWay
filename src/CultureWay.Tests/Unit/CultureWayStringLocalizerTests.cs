@@ -1,5 +1,4 @@
 using System.Globalization;
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.Localization;
 using Xunit;
@@ -30,7 +29,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en");
 
-        localizer["Hello"].Value.Should().Be("Hello World");
+        Assert.Equal("Hello World", localizer["Hello"].Value);
     }
 
     [Fact]
@@ -40,7 +39,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en");
 
-        localizer["Hello"].ResourceNotFound.Should().BeFalse();
+        Assert.False(localizer["Hello"].ResourceNotFound);
     }
 
     [Fact]
@@ -50,7 +49,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en");
 
-        localizer["Missing"].ResourceNotFound.Should().BeTrue();
+        Assert.True(localizer["Missing"].ResourceNotFound);
     }
 
     [Fact]
@@ -60,7 +59,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en");
 
-        localizer["Missing.Key"].Value.Should().Be("Missing.Key");
+        Assert.Equal("Missing.Key", localizer["Missing.Key"].Value);
     }
 
     [Fact]
@@ -73,8 +72,8 @@ public class CultureWayStringLocalizerTests
         using var _ = SetUICulture("pl");
 
         var result = localizer["Hello"];
-        result.Value.Should().Be("Hello World");
-        result.ResourceNotFound.Should().BeFalse();
+        Assert.Equal("Hello World", result.Value);
+        Assert.False(result.ResourceNotFound);
     }
 
     [Fact]
@@ -84,7 +83,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("pl");
 
-        localizer["AnyKey"].ResourceNotFound.Should().BeTrue();
+        Assert.True(localizer["AnyKey"].ResourceNotFound);
     }
 
     [Fact]
@@ -99,7 +98,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en-US");
 
-        localizer["Hello"].Value.Should().Be("American English");
+        Assert.Equal("American English", localizer["Hello"].Value);
     }
 
     [Fact]
@@ -111,7 +110,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en-GB");
 
-        localizer["Hello"].Value.Should().Be("English");
+        Assert.Equal("English", localizer["Hello"].Value);
     }
 
     [Fact]
@@ -123,7 +122,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en");
 
-        localizer["Greeting", "Alice"].Value.Should().Be("Hello, Alice!");
+        Assert.Equal("Hello, Alice!", localizer["Greeting", "Alice"].Value);
     }
 
     [Fact]
@@ -133,7 +132,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en");
 
-        localizer["Hello, {0}!", "World"].Value.Should().Be("Hello, World!");
+        Assert.Equal("Hello, World!", localizer["Hello, {0}!", "World"].Value);
     }
 
     [Fact]
@@ -143,7 +142,7 @@ public class CultureWayStringLocalizerTests
 
         using var _ = SetUICulture("en");
 
-        localizer["Key {0}", "x"].ResourceNotFound.Should().BeTrue();
+        Assert.True(localizer["Key {0}", "x"].ResourceNotFound);
     }
 
     [Fact]
@@ -160,9 +159,9 @@ public class CultureWayStringLocalizerTests
         using var _ = SetUICulture("en");
 
         var all = localizer.GetAllStrings(includeParentCultures: false).ToList();
-        all.Should().HaveCount(2);
-        all.Should().Contain(s => s.Name == "A" && s.Value == "en-A");
-        all.Should().Contain(s => s.Name == "B" && s.Value == "en-B");
+        Assert.Equal(2, all.Count());
+        Assert.Contains(all, s => s.Name == "A" && s.Value == "en-A");
+        Assert.Contains(all, s => s.Name == "B" && s.Value == "en-B");
     }
 
     [Fact]
@@ -179,8 +178,8 @@ public class CultureWayStringLocalizerTests
 
         var all = localizer.GetAllStrings(includeParentCultures: true).ToList();
 
-        all.Should().Contain(s => s.Name == "PlOnly");
-        all.Should().Contain(s => s.Name == "EnOnly");
+        Assert.Contains(all, s => s.Name == "PlOnly");
+        Assert.Contains(all, s => s.Name == "EnOnly");
     }
 
     private static IDisposable SetUICulture(string culture)

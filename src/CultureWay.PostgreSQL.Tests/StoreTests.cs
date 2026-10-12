@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Kododo.CultureWay.Core.Model;
 using Kododo.CultureWay.PostgreSQL.Tests.Fixtures;
 using Xunit;
@@ -27,21 +26,20 @@ public class StoreTests : IAsyncLifetime
     {
         await _store.SetAsync([new Translation("probe", "en", "ok")]);
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle(t => t.Key == "probe");
+        Assert.Single(result, t => t.Key == "probe");
     }
 
     [Fact]
     public async Task InitializeAsync_CalledTwice_IsIdempotent()
     {
-        var act = async () => await _store.InitializeAsync();
-        await act.Should().NotThrowAsync();
+        await _store.InitializeAsync();
     }
 
     [Fact]
     public async Task GetAll_WhenTableIsEmpty_ReturnsEmptyList()
     {
         var result = await _store.GetAllAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -55,8 +53,8 @@ public class StoreTests : IAsyncLifetime
 
         var result = await _store.GetAllAsync();
 
-        result.Should().HaveCount(3);
-        result.Select(t => t.Key).Should().BeEquivalentTo("Key1", "Key2", "Key3");
+        Assert.Equal(3, result.Count());
+        Assert.Equivalent(new[] { "Key1", "Key2", "Key3" }, result.Select(t => t.Key), strict: true);
     }
 
     [Fact]
@@ -69,8 +67,8 @@ public class StoreTests : IAsyncLifetime
 
         var result = await _store.GetAllAsync();
 
-        result.Should().Contain(t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello");
-        result.Should().Contain(t => t.Key == "Hello" && t.Culture == "pl" && t.Value == "Cześć");
+        Assert.Contains(result, t => t.Key == "Hello" && t.Culture == "en" && t.Value == "Hello");
+        Assert.Contains(result, t => t.Key == "Hello" && t.Culture == "pl" && t.Value == "Cześć");
     }
 
     [Fact]
@@ -79,7 +77,7 @@ public class StoreTests : IAsyncLifetime
         await _store.SetAsync([new Translation("New", "en", "value")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle(t => t.Key == "New" && t.Culture == "en" && t.Value == "value");
+        Assert.Single(result, t => t.Key == "New" && t.Culture == "en" && t.Value == "value");
     }
 
     [Fact]
@@ -89,8 +87,8 @@ public class StoreTests : IAsyncLifetime
         await _store.SetAsync([new Translation("Key", "en", "NewValue")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle();
-        result.Single().Value.Should().Be("NewValue");
+        Assert.Single(result);
+        Assert.Equal("NewValue", result.Single().Value);
     }
 
     [Fact]
@@ -102,7 +100,7 @@ public class StoreTests : IAsyncLifetime
         ]);
 
         var result = await _store.GetAllAsync();
-        result.Should().HaveCount(2);
+        Assert.Equal(2, result.Count());
     }
 
     [Fact]
@@ -113,7 +111,7 @@ public class StoreTests : IAsyncLifetime
         await _store.SetAsync([new Translation("Key", "en", "C")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle(t => t.Key == "Key" && t.Culture == "en");
+        Assert.Single(result, t => t.Key == "Key" && t.Culture == "en");
     }
 
     [Fact]
@@ -126,7 +124,7 @@ public class StoreTests : IAsyncLifetime
         await _store.SetAsync(translations);
 
         var result = await _store.GetAllAsync();
-        result.Should().HaveCount(10);
+        Assert.Equal(10, result.Count());
     }
 
     [Fact]
@@ -135,7 +133,7 @@ public class StoreTests : IAsyncLifetime
         await _store.SetAsync([]);
 
         var result = await _store.GetAllAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -143,8 +141,7 @@ public class StoreTests : IAsyncLifetime
     {
         var brokenStore = new Store("Host=127.0.0.1;Port=9;Database=x;Username=x;Password=x");
 
-        var act = async () => await brokenStore.SetAsync([new Translation("K", "en", "V")]);
-        await act.Should().ThrowAsync<Exception>();
+        await Assert.ThrowsAnyAsync<Exception>(() => brokenStore.SetAsync([new Translation("K", "en", "V")]));
     }
 
     [Fact]
@@ -156,7 +153,7 @@ public class StoreTests : IAsyncLifetime
         await freshStore.InitializeAsync();
 
         var result = await freshStore.GetAllAsync();
-        result.Should().Contain(t => t.Key == "Persistent" && t.Culture == "en" && t.Value == "data");
+        Assert.Contains(result, t => t.Key == "Persistent" && t.Culture == "en" && t.Value == "data");
     }
 
     [Fact]
@@ -170,7 +167,7 @@ public class StoreTests : IAsyncLifetime
         await _store.DeleteAsync([("Hello", "en")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle(t => t.Culture == "pl");
+        Assert.Single(result, t => t.Culture == "pl");
     }
 
     [Fact]
@@ -178,11 +175,10 @@ public class StoreTests : IAsyncLifetime
     {
         await _store.SetAsync([new Translation("Key", "en", "Value")]);
 
-        var act = async () => await _store.DeleteAsync([("NonExisting", "en")]);
-        await act.Should().NotThrowAsync();
+        await _store.DeleteAsync([("NonExisting", "en")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -193,7 +189,7 @@ public class StoreTests : IAsyncLifetime
         await _store.DeleteAsync([]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -208,7 +204,7 @@ public class StoreTests : IAsyncLifetime
         await _store.DeleteAsync([("A", "en"), ("B", "en")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().ContainSingle(t => t.Key == "C");
+        Assert.Single(result, t => t.Key == "C");
     }
 
     [Fact]
@@ -222,7 +218,7 @@ public class StoreTests : IAsyncLifetime
         await _store.DeleteAsync([("A", "en"), ("A", "pl")]);
 
         var result = await _store.GetAllAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -230,7 +226,7 @@ public class StoreTests : IAsyncLifetime
     {
         await _store.AddSupportedCultureAsync("fr");
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().ContainSingle(c => c == "fr");
+        Assert.Single(result, c => c == "fr");
     }
 
     [Fact]
@@ -240,14 +236,14 @@ public class StoreTests : IAsyncLifetime
         await _store.InitializeAsync();
 
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().ContainSingle(c => c == "fr");
+        Assert.Single(result, c => c == "fr");
     }
 
     [Fact]
     public async Task GetSupportedCultures_WhenTableIsEmpty_ReturnsEmptyList()
     {
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -257,7 +253,7 @@ public class StoreTests : IAsyncLifetime
         await _store.AddSupportedCultureAsync("fr");
 
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -269,7 +265,7 @@ public class StoreTests : IAsyncLifetime
         await freshStore.InitializeAsync();
 
         var result = await freshStore.GetSupportedCulturesAsync();
-        result.Should().Contain("fr");
+        Assert.Contains("fr", result);
     }
 
     [Fact]
@@ -280,7 +276,7 @@ public class StoreTests : IAsyncLifetime
         await _store.RemoveSupportedCultureAsync("fr");
 
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -288,11 +284,10 @@ public class StoreTests : IAsyncLifetime
     {
         await _store.AddSupportedCultureAsync("fr");
 
-        var act = async () => await _store.RemoveSupportedCultureAsync("it");
-        await act.Should().NotThrowAsync();
+        await _store.RemoveSupportedCultureAsync("it");
 
         var result = await _store.GetSupportedCulturesAsync();
-        result.Should().ContainSingle();
+        Assert.Single(result);
     }
 
     [Fact]
@@ -305,7 +300,7 @@ public class StoreTests : IAsyncLifetime
         await freshStore.InitializeAsync();
 
         var result = await freshStore.GetSupportedCulturesAsync();
-        result.Should().NotContain("fr");
+        Assert.DoesNotContain("fr", result);
     }
 
     [Fact]
@@ -313,7 +308,7 @@ public class StoreTests : IAsyncLifetime
     {
         await _store.SetDefaultCultureAsync("pl");
         var result = await _store.GetDefaultCultureAsync();
-        result.Should().Be("pl");
+        Assert.Equal("pl", result);
     }
 
     [Fact]
@@ -323,14 +318,14 @@ public class StoreTests : IAsyncLifetime
         await _store.InitializeAsync();
 
         var result = await _store.GetDefaultCultureAsync();
-        result.Should().Be("pl");
+        Assert.Equal("pl", result);
     }
 
     [Fact]
     public async Task GetDefaultCulture_WhenNotSet_ReturnsNull()
     {
         var result = await _store.GetDefaultCultureAsync();
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -340,7 +335,7 @@ public class StoreTests : IAsyncLifetime
         await _store.SetDefaultCultureAsync("de");
 
         var result = await _store.GetDefaultCultureAsync();
-        result.Should().Be("de");
+        Assert.Equal("de", result);
     }
 
     [Fact]
@@ -352,7 +347,7 @@ public class StoreTests : IAsyncLifetime
         await freshStore.InitializeAsync();
 
         var result = await freshStore.GetDefaultCultureAsync();
-        result.Should().Be("pl");
+        Assert.Equal("pl", result);
     }
 }
 
