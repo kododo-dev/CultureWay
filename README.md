@@ -130,6 +130,12 @@ The settings that take an `HttpContext` run on every request, so they can depend
 
 The editor also remembers the light or dark theme in `localStorage` under `cultureway.theme` (`light` or `dark`). Your own pages on the same origin can read that key to match it. When a request fails because the session expired (a 401, or a redirect to a sign-in page), the editor asks the user to sign in again in a new tab, so edits that were not saved stay on the page.
 
+## Limitations
+
+- An edit reloads the translations only in the instance that saved it. When the app runs as several replicas, the other replicas pick up the change after a restart.
+- All `IStringLocalizer<T>` instances share one key space, whatever `T` is. Keys that repeat across `.resx` files of different types resolve to the same translation.
+- Values are formatted with `string.Format`. There is no plural or ICU message support, and a malformed placeholder such as `{0` throws when the string is used.
+
 ## Custom store
 
 Implement `IStore` from `Kododo.CultureWay.Core` and register it before `AddCultureWay`. A minimal store needs `InitializeAsync`, `GetAllAsync`, `SetAsync` and `DeleteAsync`.
