@@ -53,10 +53,33 @@ app.UseCultureWay("/translations"); // mounts the UI at /translations
 Then use localization as usual:
 
 ```csharp
-app.MapGet("/", (IStringLocalizer<Program> l) => l["App.Title"].Value);
+app.MapGet("/", (IStringLocalizer<Program> l) => l["Title"].Value); // Program.Title, then Title
 ```
 
 `InitializeCultureWayAsync` creates the database schema, loads the translations into the cache and restores languages added at runtime.
+
+## Keys and scopes
+
+`IStringLocalizer<T>` looks keys up in the scope of `T`, the type's short name: in a `CheckoutPage`, `l["Pay"]` reads `CheckoutPage.Pay`. If that key has no value, it falls back to the unscoped `Pay`. Strings shared by many types can therefore stay without a scope, and each type can still override them. The editor shows scopes as namespaces in its side menu.
+
+The user's language comes first. Each culture in the fallback chain is tried with both keys before the next culture, so an unscoped Polish `Pay` beats a scoped English `CheckoutPage.Pay` for a Polish user.
+
+To choose a different scope, mark the type:
+
+```csharp
+[LocalizationScope("Shop.Checkout")]   // reads Shop.Checkout.Pay
+public class CheckoutPage { }
+
+[LocalizationScope("")]                // reads Pay, for a marker type of shared strings
+public class SharedResources { }
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `ScopeOf` | `CultureWayOptions.DefaultScopeOf` | Maps a type to its scope. The default reads `[LocalizationScope]`, or else uses the type's short name without the generic arity. |
+| `FallBackToUnscopedKeys` | `true` | Whether a missing `{scope}.{key}` falls back to `{key}`. |
+
+Localizers created from a base name instead of a type, such as `IViewLocalizer`, use the base name without the assembly name as the scope, e.g. `Views.Home.Index`.
 
 ## Languages
 
@@ -77,7 +100,7 @@ builder.Services.AddCultureWay(x =>
 });
 ```
 
-`UseResources<T>()` uses the same naming convention as `IStringLocalizer<T>`. Keys are prefixed with the type name (`SharedResources.Title`). Pass `prefix: ""` to use the raw keys or any other string to choose your own.
+`UseResources<T>()` finds the files with the same naming convention as `IStringLocalizer<T>` and prefixes their keys with the scope of `T` (`SharedResources.Title`), which is where `IStringLocalizer<T>` looks them up. Pass `prefix: ""` to use the raw keys or any other string to choose your own.
 
 A key that comes from `.resx` can't be deleted. You can override its value, and later reset it to the value from the resource file.
 

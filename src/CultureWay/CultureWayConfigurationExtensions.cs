@@ -19,10 +19,11 @@ public static class CultureWayConfigurationExtensions
     /// </summary>
     /// <param name="configuration">The CultureWay configuration builder.</param>
     /// <param name="prefix">
-    /// Prepended to every resx key as <c>{prefix}.{key}</c>. Defaults to the short name of
-    /// <typeparamref name="T"/> (e.g. <c>HomeController</c>) to keep keys from different resource
-    /// files apart. Pass an explicit value to avoid a collision between same-named types in different
-    /// namespaces, or <see cref="string.Empty"/> to use the raw resx keys unprefixed.
+    /// Prepended to every resx key as <c>{prefix}.{key}</c>. Defaults to the scope of
+    /// <typeparamref name="T"/> (<see cref="CultureWayOptions.ScopeOf"/>: its short name, e.g.
+    /// <c>HomeController</c>, unless <see cref="LocalizationScopeAttribute"/> says otherwise), which is where
+    /// <c>IStringLocalizer&lt;T&gt;</c> looks the keys up. Pass <see cref="string.Empty"/> to use the raw resx
+    /// keys unprefixed.
     /// </param>
     public static ICultureWayConfiguration UseResources<T>(this ICultureWayConfiguration configuration, string? prefix = null)
     {
@@ -34,7 +35,7 @@ public static class CultureWayConfigurationExtensions
             var factory = new ResourceManagerStringLocalizerFactory(localizationOptions, loggerFactory);
             var localizer = factory.Create(typeof(T));
 
-            return new ResxReadOnlySource(localizer, prefix ?? typeof(T).Name, configuration.Options);
+            return new ResxReadOnlySource(localizer, prefix ?? configuration.Options.ScopeOf(typeof(T)), configuration.Options);
         });
         return configuration;
     }
