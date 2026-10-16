@@ -1,6 +1,8 @@
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.UI.API.AddCulture;
+using Kododo.Reiho.AspNetCore.API;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
@@ -27,14 +29,12 @@ public class AddCultureHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ValidCulture_ReturnsNoErrors()
+    public async Task Handle_ValidCulture_Succeeds()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new AddCulture("fr"), CancellationToken.None);
-
-        Assert.Empty(result);
+        await handler.HandleAsync(new AddCulture("fr"), CancellationToken.None);
     }
 
     [Fact]
@@ -63,49 +63,49 @@ public class AddCultureHandlerTests
     }
 
     [Fact]
-    public async Task Handle_EmptyCulture_ReturnsValidationError()
+    public async Task Handle_EmptyCulture_ThrowsBadRequest()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new AddCulture(""), CancellationToken.None);
+        var e = await Assert.ThrowsAsync<RequestException>(() => handler.HandleAsync(new AddCulture(""), CancellationToken.None));
 
-        Assert.Single(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, e.StatusCode);
         Assert.DoesNotContain("", options.SupportedCultures);
     }
 
     [Fact]
-    public async Task Handle_InvalidCultureCode_ReturnsValidationError()
+    public async Task Handle_InvalidCultureCode_ThrowsBadRequest()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new AddCulture("not-a-culture-!!"), CancellationToken.None);
+        var e = await Assert.ThrowsAsync<RequestException>(() => handler.HandleAsync(new AddCulture("not-a-culture-!!"), CancellationToken.None));
 
-        Assert.Single(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, e.StatusCode);
         Assert.DoesNotContain("not-a-culture-!!", options.SupportedCultures);
     }
 
     [Fact]
-    public async Task Handle_DuplicateCulture_ReturnsValidationError()
+    public async Task Handle_DuplicateCulture_ThrowsConflict()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en", "fr"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new AddCulture("fr"), CancellationToken.None);
+        var e = await Assert.ThrowsAsync<RequestException>(() => handler.HandleAsync(new AddCulture("fr"), CancellationToken.None));
 
-        Assert.Single(result);
+        Assert.Equal(StatusCodes.Status409Conflict, e.StatusCode);
     }
 
     [Fact]
-    public async Task Handle_DuplicateCulture_CaseInsensitive_ReturnsValidationError()
+    public async Task Handle_DuplicateCulture_CaseInsensitive_ThrowsConflict()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en", "fr"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new AddCulture("FR"), CancellationToken.None);
+        var e = await Assert.ThrowsAsync<RequestException>(() => handler.HandleAsync(new AddCulture("FR"), CancellationToken.None));
 
-        Assert.Single(result);
+        Assert.Equal(StatusCodes.Status409Conflict, e.StatusCode);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class AddCultureHandlerTests
         var options = new CultureWayOptions { SupportedCultures = ["en", "fr"], DefaultCulture = "en" };
         var handler = CreateHandler(store, options);
 
-        await handler.HandleAsync(new AddCulture("fr"), CancellationToken.None);
+        await Assert.ThrowsAsync<RequestException>(() => handler.HandleAsync(new AddCulture("fr"), CancellationToken.None));
 
         await store.DidNotReceive().AddSupportedCultureAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }

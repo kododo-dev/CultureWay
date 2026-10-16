@@ -10,24 +10,24 @@ internal sealed class DeleteCultureHandler(
     IStore store,
     TranslationCache cache,
     CultureWayOptions options,
-    IOptions<RequestLocalizationOptions> requestLocalizationOptions) : IRequestHandler<DeleteCulture, string[]>
+    IOptions<RequestLocalizationOptions> requestLocalizationOptions) : IRequestHandler<DeleteCulture>
 {
-    public async Task<string[]> HandleAsync(DeleteCulture request, CancellationToken cancellationToken)
+    public async Task HandleAsync(DeleteCulture request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Culture))
-            return ["Culture code must not be empty."];
+            throw RequestException.Invalid("culture", "Culture code must not be empty.");
 
         var match = Array.Find(options.SupportedCultures,
             c => string.Equals(c, request.Culture, StringComparison.OrdinalIgnoreCase));
 
         if (match is null)
-            return [$"Culture '{request.Culture}' is not supported."];
+            throw RequestException.NotFound($"Culture '{request.Culture}' is not supported.");
 
         if (string.Equals(match, options.DefaultCulture, StringComparison.OrdinalIgnoreCase))
-            return ["The default culture cannot be deleted."];
+            throw RequestException.Conflict("The default culture cannot be deleted.");
 
         if (options.SupportedCultures.Length <= 1)
-            return ["At least one culture must remain."];
+            throw RequestException.Conflict("At least one culture must remain.");
 
         options.SupportedCultures = [.. options.SupportedCultures.Where(c => c != match)];
         await store.RemoveSupportedCultureAsync(match, cancellationToken);
@@ -45,7 +45,5 @@ internal sealed class DeleteCultureHandler(
         cache.Load(remaining);
 
         RequestLocalizationSync.Remove(requestLocalizationOptions.Value, match);
-
-        return [];
     }
 }

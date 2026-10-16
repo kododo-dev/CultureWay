@@ -26,6 +26,37 @@ export class ForbiddenError extends Error {
   }
 }
 
+/**
+ * The API turned the request down (400, 404, 409) with a problem details response; `messages` are its
+ * field errors, or its detail.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly messages: string[];
+
+  constructor(status: number, messages: string[]) {
+    super(messages.join(' '));
+    this.status = status;
+    this.messages = messages;
+  }
+}
+
+interface ProblemDetails {
+  title?: string;
+  detail?: string;
+  errors?: Record<string, string[]>;
+}
+
+async function toApiError(res: Response): Promise<Error> {
+  if (!res.headers.get('Content-Type')?.includes('application/problem+json'))
+    return new Error(`${res.status} ${res.statusText}`);
+  const problem = (await res.json()) as ProblemDetails;
+  const messages = problem.errors
+    ? Object.values(problem.errors).flat()
+    : [problem.detail ?? problem.title ?? `${res.status} ${res.statusText}`];
+  return new ApiError(res.status, messages);
+}
+
 const sessionExpiredListeners = new Set<() => void>();
 
 export function onSessionExpired(listener: () => void): () => void {
@@ -48,7 +79,7 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
     throw new SessionExpiredError();
   }
   if (res.status === 403) throw new ForbiddenError();
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if (!res.ok) throw await toApiError(res);
 
   const text = await res.text();
   return (text ? JSON.parse(text) : null) as T;
@@ -63,20 +94,21 @@ export const fetchTranslations = (): Promise<TranslationDto[]> =>
 export const fetchCultures = (): Promise<CultureDto[]> =>
   post<CultureDto[]>('/GetCultures');
 
+/** Throws {@link ApiError} with the validation messages when the changes are not valid. */
 export const saveTranslations = (
   translations: TranslationDto[],
   keysToDelete: TranslationKeyDto[],
-): Promise<string[]> =>
-  post<string[]>('/UpdateTranslations', { translations, keysToDelete });
+): Promise<void> =>
+  post<void>('/UpdateTranslations', { translations, keysToDelete });
 
-export const addCulture = (culture: string): Promise<string[]> =>
-  post<string[]>('/AddCulture', { culture });
+export const addCulture = (culture: string): Promise<void> =>
+  post<void>('/AddCulture', { culture });
 
-export const deleteCulture = (culture: string): Promise<string[]> =>
-  post<string[]>('/DeleteCulture', { culture });
+export const deleteCulture = (culture: string): Promise<void> =>
+  post<void>('/DeleteCulture', { culture });
 
-export const setDefaultCulture = (culture: string): Promise<string[]> =>
-  post<string[]>('/SetDefaultCulture', { culture });
+export const setDefaultCulture = (culture: string): Promise<void> =>
+  post<void>('/SetDefaultCulture', { culture });
 
 export const exportTranslations = (request: ExportRequest): Promise<ExportFileDto> =>
   post<ExportFileDto>('/ExportTranslations', request);

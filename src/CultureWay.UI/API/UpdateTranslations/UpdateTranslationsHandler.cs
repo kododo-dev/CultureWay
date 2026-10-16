@@ -9,13 +9,13 @@ namespace Kododo.CultureWay.UI.API.UpdateTranslations;
 internal sealed class UpdateTranslationsHandler(
     IStore store,
     TranslationCache cache,
-    CultureWayOptions options) : IRequestHandler<UpdateTranslations, string[]>
+    CultureWayOptions options) : IRequestHandler<UpdateTranslations>
 {
-    public async Task<string[]> HandleAsync(UpdateTranslations request, CancellationToken cancellationToken)
+    public async Task HandleAsync(UpdateTranslations request, CancellationToken cancellationToken)
     {
         var errors = Validate(request.Translations, request.KeysToDelete);
-        if (errors.Length > 0)
-            return errors;
+        if (errors.Count > 0)
+            throw new RequestException("The translations are not valid.") { Errors = errors };
 
         if (request.KeysToDelete.Length > 0)
         {
@@ -35,35 +35,36 @@ internal sealed class UpdateTranslationsHandler(
 
         var all = await store.GetAllAsync(cancellationToken);
         cache.Load(all);
-
-        return [];
     }
 
-    private string[] Validate(TranslationDto[] translations, TranslationKeyDto[] keysToDelete)
+    /// <summary>Messages per field of the request, named as in its JSON (<c>translations[2].culture</c>).</summary>
+    private Dictionary<string, string[]> Validate(TranslationDto[] translations, TranslationKeyDto[] keysToDelete)
     {
-        var errors = new List<string>();
+        var errors = new Dictionary<string, string[]>();
         var supported = new HashSet<string>(options.SupportedCultures, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var t in translations)
+        for (var i = 0; i < translations.Length; i++)
         {
+            var t = translations[i];
             if (string.IsNullOrWhiteSpace(t.Key))
-                errors.Add("Translation key must not be empty.");
+                errors[$"translations[{i}].key"] = ["Translation key must not be empty."];
             else if (string.IsNullOrWhiteSpace(t.Culture))
-                errors.Add($"{t.Key}: culture must not be empty.");
+                errors[$"translations[{i}].culture"] = [$"{t.Key}: culture must not be empty."];
             else if (!supported.Contains(t.Culture))
-                errors.Add($"{t.Key}: culture '{t.Culture}' is not in SupportedCultures.");
+                errors[$"translations[{i}].culture"] = [$"{t.Key}: culture '{t.Culture}' is not in SupportedCultures."];
             else if (t.Value is null)
-                errors.Add($"{t.Key} [{t.Culture}]: value must not be null.");
+                errors[$"translations[{i}].value"] = [$"{t.Key} [{t.Culture}]: value must not be null."];
         }
 
-        foreach (var k in keysToDelete)
+        for (var i = 0; i < keysToDelete.Length; i++)
         {
+            var k = keysToDelete[i];
             if (string.IsNullOrWhiteSpace(k.Key))
-                errors.Add("Delete key must not be empty.");
+                errors[$"keysToDelete[{i}].key"] = ["Delete key must not be empty."];
             else if (string.IsNullOrWhiteSpace(k.Culture))
-                errors.Add($"{k.Key}: culture to delete must not be empty.");
+                errors[$"keysToDelete[{i}].culture"] = [$"{k.Key}: culture to delete must not be empty."];
         }
 
-        return [.. errors];
+        return errors;
     }
 }

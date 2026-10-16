@@ -81,13 +81,11 @@ public class TranslationsApiTests : IAsyncLifetime
     // ── AddCulture ─────────────────────────────────────────────────────
 
     [Fact]
-    public async Task AddCulture_ValidCode_Returns200WithEmptyErrors()
+    public async Task AddCulture_ValidCode_Returns204()
     {
         var response = await PostAddCulture("fr");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        Assert.Empty(errors!);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [Fact]
@@ -107,40 +105,37 @@ public class TranslationsApiTests : IAsyncLifetime
 
         var response = await PostUpdate(translations: [("Key", "fr", "Bonjour")]);
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        Assert.Empty(errors!);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [Fact]
-    public async Task AddCulture_DuplicateCode_ReturnsValidationError()
+    public async Task AddCulture_DuplicateCode_Returns409()
     {
         var response = await PostAddCulture("en");
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.Conflict);
         Assert.Single(errors!);
     }
 
     [Fact]
-    public async Task AddCulture_InvalidCode_ReturnsValidationError()
+    public async Task AddCulture_InvalidCode_Returns400()
     {
         var response = await PostAddCulture("not-a-culture-!!");
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.BadRequest);
         Assert.Single(errors!);
     }
 
     // ── DeleteCulture ──────────────────────────────────────────────────
 
     [Fact]
-    public async Task DeleteCulture_NonDefaultCulture_Returns200WithEmptyErrors()
+    public async Task DeleteCulture_NonDefaultCulture_Returns204()
     {
         await PostAddCulture("fr");
 
         var response = await PostDeleteCulture("fr");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        Assert.Empty(errors!);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [Fact]
@@ -168,11 +163,11 @@ public class TranslationsApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task DeleteCulture_DefaultCulture_ReturnsValidationError()
+    public async Task DeleteCulture_DefaultCulture_Returns409()
     {
         var response = await PostDeleteCulture("en");
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.Conflict);
         Assert.Single(errors!);
 
         var cultures = await FetchCultures();
@@ -180,24 +175,22 @@ public class TranslationsApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task DeleteCulture_UnsupportedCulture_ReturnsValidationError()
+    public async Task DeleteCulture_UnsupportedCulture_Returns404()
     {
         var response = await PostDeleteCulture("fr");
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.NotFound);
         Assert.Single(errors!);
     }
 
     // ── SetDefaultCulture ──────────────────────────────────────────────
 
     [Fact]
-    public async Task SetDefaultCulture_SupportedCulture_Returns200WithEmptyErrors()
+    public async Task SetDefaultCulture_SupportedCulture_Returns204()
     {
         var response = await PostSetDefaultCulture("pl");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        Assert.Empty(errors!);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [Fact]
@@ -212,11 +205,11 @@ public class TranslationsApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task SetDefaultCulture_UnsupportedCulture_ReturnsValidationError()
+    public async Task SetDefaultCulture_UnsupportedCulture_Returns404()
     {
         var response = await PostSetDefaultCulture("fr");
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.NotFound);
         Assert.Single(errors!);
     }
 
@@ -239,14 +232,12 @@ public class TranslationsApiTests : IAsyncLifetime
     // ── UpdateTranslations ─────────────────────────────────────────────
 
     [Fact]
-    public async Task UpdateTranslations_ValidData_Returns200WithEmptyErrors()
+    public async Task UpdateTranslations_ValidData_Returns204()
     {
         var response = await PostUpdate(
             translations: [("Hello", "en", "Hello World")]);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        Assert.Empty(errors!);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [Fact]
@@ -335,11 +326,11 @@ public class TranslationsApiTests : IAsyncLifetime
     // ── Validation ─────────────────────────────────────────────────────
 
     [Fact]
-    public async Task UpdateTranslations_UnsupportedCulture_ReturnsValidationError()
+    public async Task UpdateTranslations_UnsupportedCulture_Returns400()
     {
         var response = await PostUpdate(translations: [("Key", "fr", "Bonjour")]);
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.BadRequest);
         Assert.Single(errors!, e => e.Contains("fr") && e.Contains("SupportedCultures"));
     }
 
@@ -353,20 +344,20 @@ public class TranslationsApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task UpdateTranslations_EmptyKey_ReturnsValidationError()
+    public async Task UpdateTranslations_EmptyKey_Returns400()
     {
         var response = await PostUpdate(translations: [("", "en", "Value")]);
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.BadRequest);
         Assert.Single(errors!, e => e.Contains("key") && e.Contains("empty"));
     }
 
     [Fact]
-    public async Task UpdateTranslations_EmptyCulture_ReturnsValidationError()
+    public async Task UpdateTranslations_EmptyCulture_Returns400()
     {
         var response = await PostUpdate(translations: [("Key", "", "Value")]);
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.BadRequest);
         Assert.Single(errors!);
     }
 
@@ -379,29 +370,40 @@ public class TranslationsApiTests : IAsyncLifetime
             ("Key", "fr", "B"),
         ]);
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal(2, errors!.Count());
     }
 
     [Fact]
-    public async Task UpdateTranslations_DeleteWithEmptyKey_ReturnsValidationError()
+    public async Task UpdateTranslations_DeleteWithEmptyKey_Returns400()
     {
         var response = await PostUpdate(keysToDelete: [("", "en")]);
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.BadRequest);
         Assert.Single(errors!);
     }
 
     [Fact]
-    public async Task UpdateTranslations_DeleteWithEmptyCulture_ReturnsValidationError()
+    public async Task UpdateTranslations_DeleteWithEmptyCulture_Returns400()
     {
         var response = await PostUpdate(keysToDelete: [("Key", "")]);
 
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
+        var errors = await ReadErrorsAsync(response, HttpStatusCode.BadRequest);
         Assert.Single(errors!);
     }
 
     // ── helpers ────────────────────────────────────────────────────────
+
+    /// <summary>The messages of a problem details response: its field errors, or else its detail.</summary>
+    private static async Task<string[]> ReadErrorsAsync(HttpResponseMessage response, HttpStatusCode status)
+    {
+        Assert.Equal(status, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        return problem.TryGetProperty("errors", out var errors)
+            ? errors.EnumerateObject().SelectMany(e => e.Value.EnumerateArray().Select(m => m.GetString()!)).ToArray()
+            : [problem.GetProperty("detail").GetString()!];
+    }
 
     private async Task<TranslationResponse[]> FetchTranslations()
     {

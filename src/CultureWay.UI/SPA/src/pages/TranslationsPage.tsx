@@ -11,7 +11,7 @@ import { useThemeMode } from '../context/ThemeContext.tsx';
 import { useTranslations } from '../context/TranslationsContext.tsx';
 import { useNamespace, extractNamespace } from '../context/NamespaceContext.tsx';
 import { useI18n } from '../i18n/I18nContext.tsx';
-import { saveTranslations } from '../api/api.ts';
+import { ApiError, saveTranslations } from '../api/api.ts';
 import type { TranslationDto, TranslationKeyDto } from '../api/api.model.ts';
 import PageHeader from '../components/layout/PageHeader.tsx';
 import AddKeyModal from '../components/translations/AddKeyModal.tsx';
@@ -283,16 +283,12 @@ const TranslationsPage = () => {
         ...[...keysToReset].flatMap(key => cultures.map(c => ({ key, culture: c.code }))),
       ];
 
-      const errors = await saveTranslations(toSave, toDelete);
-
-      if (errors.length === 0) {
-        setSnack({ open: true, severity: 'success', messages: [t.saved] });
-        await reload();
-      } else {
-        setSnack({ open: true, severity: 'error', messages: errors });
-      }
+      await saveTranslations(toSave, toDelete);
+      setSnack({ open: true, severity: 'success', messages: [t.saved] });
+      await reload();
     } catch (e) {
-      setSnack({ open: true, severity: 'error', messages: [e instanceof Error ? e.message : 'Save failed'] });
+      const messages = e instanceof ApiError ? e.messages : [e instanceof Error ? e.message : 'Save failed'];
+      setSnack({ open: true, severity: 'error', messages });
     } finally {
       setSaving(false);
     }
