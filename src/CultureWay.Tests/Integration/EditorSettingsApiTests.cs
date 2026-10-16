@@ -136,8 +136,7 @@ public class EditorSettingsApiTests
 
         var response = await app.GetTestClient().SendAsync(request);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Empty((await response.Content.ReadFromJsonAsync<string[]>(JsonOpts))!);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [Fact]

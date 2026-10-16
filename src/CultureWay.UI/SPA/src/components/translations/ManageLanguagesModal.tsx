@@ -71,11 +71,7 @@ const ManageLanguagesModal = ({ open, cultures, onChanged, onClose }: ManageLang
     setSubmitting(true);
     setAddError(null);
     try {
-      const errors = await addCulture(trimmed);
-      if (errors.length > 0) {
-        setAddError(errors[0]);
-        return;
-      }
+      await addCulture(trimmed);
       setCode('');
       onChanged();
     } catch (e) {
@@ -89,11 +85,7 @@ const ManageLanguagesModal = ({ open, cultures, onChanged, onClose }: ManageLang
     setBusyCode(cultureCode);
     setRowError(null);
     try {
-      const errors = await setDefaultCulture(cultureCode);
-      if (errors.length > 0) {
-        setRowError(errors[0]);
-        return;
-      }
+      await setDefaultCulture(cultureCode);
       onChanged();
     } catch (e) {
       setRowError(e instanceof Error ? e.message : 'Failed to set default language');
@@ -107,11 +99,7 @@ const ManageLanguagesModal = ({ open, cultures, onChanged, onClose }: ManageLang
     setBusyCode(cultureCode);
     setRowError(null);
     try {
-      const errors = await deleteCulture(cultureCode);
-      if (errors.length > 0) {
-        setRowError(errors[0]);
-        return;
-      }
+      await deleteCulture(cultureCode);
       onChanged();
     } catch (e) {
       setRowError(e instanceof Error ? e.message : 'Failed to delete language');

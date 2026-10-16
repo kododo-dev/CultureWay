@@ -9,12 +9,12 @@ namespace Kododo.CultureWay.UI.API.AddCulture;
 internal sealed class AddCultureHandler(
     IStore store,
     CultureWayOptions options,
-    IOptions<RequestLocalizationOptions> requestLocalizationOptions) : IRequestHandler<AddCulture, string[]>
+    IOptions<RequestLocalizationOptions> requestLocalizationOptions) : IRequestHandler<AddCulture>
 {
-    public async Task<string[]> HandleAsync(AddCulture request, CancellationToken cancellationToken)
+    public async Task HandleAsync(AddCulture request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Culture))
-            return ["Culture code must not be empty."];
+            throw RequestException.Invalid("culture", "Culture code must not be empty.");
 
         CultureInfo cultureInfo;
         try
@@ -23,16 +23,14 @@ internal sealed class AddCultureHandler(
         }
         catch (CultureNotFoundException)
         {
-            return [$"'{request.Culture}' is not a valid culture code."];
+            throw RequestException.Invalid("culture", $"'{request.Culture}' is not a valid culture code.");
         }
 
         if (options.SupportedCultures.Contains(cultureInfo.Name, StringComparer.OrdinalIgnoreCase))
-            return [$"Culture '{cultureInfo.Name}' is already supported."];
+            throw RequestException.Conflict($"Culture '{cultureInfo.Name}' is already supported.");
 
         options.SupportedCultures = [.. options.SupportedCultures, cultureInfo.Name];
         await store.AddSupportedCultureAsync(cultureInfo.Name, cancellationToken);
         RequestLocalizationSync.Sync(requestLocalizationOptions.Value, [cultureInfo.Name]);
-
-        return [];
     }
 }

@@ -1,5 +1,7 @@
 using Kododo.CultureWay.Core.Store;
 using Kododo.CultureWay.UI.API.SetDefaultCulture;
+using Kododo.Reiho.AspNetCore.API;
+using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Xunit;
 
@@ -22,14 +24,12 @@ public class SetDefaultCultureHandlerTests
     }
 
     [Fact]
-    public async Task Handle_SupportedCulture_ReturnsNoErrors()
+    public async Task Handle_SupportedCulture_Succeeds()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en", "fr"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new SetDefaultCulture("fr"), CancellationToken.None);
-
-        Assert.Empty(result);
+        await handler.HandleAsync(new SetDefaultCulture("fr"), CancellationToken.None);
     }
 
     [Fact]
@@ -56,14 +56,12 @@ public class SetDefaultCultureHandlerTests
     }
 
     [Fact]
-    public async Task Handle_AlreadyDefaultCulture_ReturnsNoErrors()
+    public async Task Handle_AlreadyDefaultCulture_Succeeds()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en", "fr"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new SetDefaultCulture("en"), CancellationToken.None);
-
-        Assert.Empty(result);
+        await handler.HandleAsync(new SetDefaultCulture("en"), CancellationToken.None);
     }
 
     [Fact]
@@ -79,26 +77,26 @@ public class SetDefaultCultureHandlerTests
     }
 
     [Fact]
-    public async Task Handle_EmptyCulture_ReturnsValidationError()
+    public async Task Handle_EmptyCulture_ThrowsBadRequest()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en", "fr"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new SetDefaultCulture(""), CancellationToken.None);
+        var e = await Assert.ThrowsAsync<RequestException>(() => handler.HandleAsync(new SetDefaultCulture(""), CancellationToken.None));
 
-        Assert.Single(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, e.StatusCode);
         Assert.Equal("en", options.DefaultCulture);
     }
 
     [Fact]
-    public async Task Handle_UnsupportedCulture_ReturnsValidationError()
+    public async Task Handle_UnsupportedCulture_ThrowsNotFound()
     {
         var options = new CultureWayOptions { SupportedCultures = ["en", "fr"], DefaultCulture = "en" };
         var handler = CreateHandler(Substitute.For<IStore>(), options);
 
-        var result = await handler.HandleAsync(new SetDefaultCulture("de"), CancellationToken.None);
+        var e = await Assert.ThrowsAsync<RequestException>(() => handler.HandleAsync(new SetDefaultCulture("de"), CancellationToken.None));
 
-        Assert.Single(result);
+        Assert.Equal(StatusCodes.Status404NotFound, e.StatusCode);
         Assert.Equal("en", options.DefaultCulture);
     }
 
@@ -109,7 +107,7 @@ public class SetDefaultCultureHandlerTests
         var options = new CultureWayOptions { SupportedCultures = ["en", "fr"], DefaultCulture = "en" };
         var handler = CreateHandler(store, options);
 
-        await handler.HandleAsync(new SetDefaultCulture("de"), CancellationToken.None);
+        await Assert.ThrowsAsync<RequestException>(() => handler.HandleAsync(new SetDefaultCulture("de"), CancellationToken.None));
 
         await store.DidNotReceive().SetDefaultCultureAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }

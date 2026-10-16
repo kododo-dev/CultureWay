@@ -5,4 +5,4 @@ namespace Kododo.CultureWay.UI.API.UpdateTranslations;
 
 internal record UpdateTranslations(
     TranslationDto[] Translations,
-    TranslationKeyDto[] KeysToDelete) : IRequest<string[]>;
+    TranslationKeyDto[] KeysToDelete) : IRequest;

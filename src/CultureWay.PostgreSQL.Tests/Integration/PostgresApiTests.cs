@@ -60,14 +60,12 @@ public class PostgresApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task UpdateTranslations_ValidData_Returns200WithEmptyErrors()
+    public async Task UpdateTranslations_ValidData_Returns204()
     {
         var response = await PostUpdate(
             translations: [("Hello", "en", "Hello World")]);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var errors = await response.Content.ReadFromJsonAsync<string[]>(JsonOpts);
-        Assert.Empty(errors!);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [Fact]

@@ -176,13 +176,7 @@ const ImportExportModal = ({
   });
 
   const handleAddLanguages = () => run(async () => {
-    for (const code of preview?.unknownCultures ?? []) {
-      const errors = await addCulture(code);
-      if (errors.length > 0) {
-        setError(errors[0]);
-        return;
-      }
-    }
+    for (const code of preview?.unknownCultures ?? []) await addCulture(code);
     onCulturesChanged();
     const input = importInput();
     if (input) setPreview(await previewImport(input));
