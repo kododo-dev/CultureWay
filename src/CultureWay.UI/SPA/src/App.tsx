@@ -1,37 +1,28 @@
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { ThemeContextProvider, useThemeMode } from './context/ThemeContext.tsx';
-import { I18nProvider } from './i18n/I18nContext.tsx';
+import { useMemo } from 'react';
+import { useShell } from '@kododo-dev/way-shell';
+import { EditorApiContext, createEditorApi } from './api/api.ts';
 import { EditorSettingsProvider } from './context/EditorSettingsContext.tsx';
 import { TranslationsProvider } from './context/TranslationsContext.tsx';
 import { NamespaceProvider } from './context/NamespaceContext.tsx';
-import MainLayout from './components/layout/MainLayout.tsx';
+import SideMenu from './components/layout/SideMenu.tsx';
 import TranslationsPage from './pages/TranslationsPage.tsx';
 
-function AppInner() {
-  const { muiTheme } = useThemeMode();
-  return (
-    <ThemeProvider theme={muiTheme}>
-      <CssBaseline />
-      <TranslationsProvider>
-        <NamespaceProvider>
-          <MainLayout>
-            <TranslationsPage />
-          </MainLayout>
-        </NamespaceProvider>
-      </TranslationsProvider>
-    </ThemeProvider>
-  );
-}
-
+// The editor inside Way.Shell: the shell provides the router, theme, language, layout and the session dialog; the
+// namespaces go into the shell's side menu.
 function App() {
+  const { api } = useShell();
+  const editorApi = useMemo(() => createEditorApi(api), [api]);
   return (
-    <ThemeContextProvider>
+    <EditorApiContext.Provider value={editorApi}>
       <EditorSettingsProvider>
-        <I18nProvider>
-          <AppInner />
-        </I18nProvider>
+        <TranslationsProvider>
+          <NamespaceProvider>
+            <SideMenu />
+            <TranslationsPage />
+          </NamespaceProvider>
+        </TranslationsProvider>
       </EditorSettingsProvider>
-    </ThemeContextProvider>
+    </EditorApiContext.Provider>
   );
 }
 

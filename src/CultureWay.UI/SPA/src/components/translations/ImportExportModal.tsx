@@ -19,10 +19,10 @@ import Alert from '@mui/material/Alert';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined';
 import { useTheme } from '@mui/material/styles';
-import { useThemeMode } from '../../context/ThemeContext.tsx';
+import { useThemeMode } from '../../theme.ts';
 import { useI18n } from '../../i18n/I18nContext.tsx';
 import { useEditorSettings } from '../../context/EditorSettingsContext.tsx';
-import { addCulture, applyImport, exportTranslations, previewImport } from '../../api/api.ts';
+import { useEditorApi } from '../../api/api.ts';
 import type { CultureDto, ImportInput, ImportPreviewDto } from '../../api/api.model.ts';
 import { MONO_FONT } from '../../utils/fonts.ts';
 
@@ -77,6 +77,7 @@ const ImportExportModal = ({
 }: ImportExportModalProps) => {
   const theme = useTheme();
   const { mode } = useThemeMode();
+  const { addCulture, applyImport, exportTranslations, previewImport } = useEditorApi();
   const { t } = useI18n();
   const { canImport, canManageCultures, maxImportBytes } = useEditorSettings();
   const isDark = mode === 'dark';

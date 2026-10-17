@@ -6,7 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import { useTheme } from '@mui/material/styles';
-import { useThemeMode } from '../../context/ThemeContext.tsx';
+import { useThemeMode } from '../../theme.ts';
 import { useI18n } from '../../i18n/I18nContext.tsx';
 import { useNamespace, extractNamespace } from '../../context/NamespaceContext.tsx';
 import { MONO_FONT } from '../../utils/fonts.ts';

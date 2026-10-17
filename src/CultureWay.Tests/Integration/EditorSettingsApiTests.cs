@@ -30,7 +30,7 @@ public class EditorSettingsApiTests
         });
 
         var app = builder.Build();
-        app.UseCultureWay("/translations");
+        app.UseCultureWay("/translations").AllowAnonymous();
         await app.InitializeCultureWayAsync();
         await app.StartAsync();
         return app;
@@ -69,6 +69,7 @@ public class EditorSettingsApiTests
     [Fact]
     public async Task ReturnsConfiguredValues()
     {
+#pragma warning disable CS0618 // the obsolete options are still reported by the API and passed on to Way.Shell
         await using var app = await StartAsync(o =>
         {
             o.Title    = "Polyglot";
@@ -77,6 +78,7 @@ public class EditorSettingsApiTests
             o.Links    = _ => [new EditorLink("Users", "/admin/users") { Icon = EditorLinkIcons.Users }];
             o.User     = _ => new EditorUser("Ada") { AccountUrl = "/account", SignOutUrl = "/logout" };
         });
+#pragma warning restore CS0618
         var settings = await FetchSettings(app.GetTestClient());
 
         Assert.Equal("Polyglot", settings.Title);
@@ -91,7 +93,9 @@ public class EditorSettingsApiTests
     {
         await using var app = await StartAsync(o =>
         {
+#pragma warning disable CS0618 // still reported by the API for its clients
             o.Links             = ctx => IsAdmin(ctx) ? [new EditorLink("Users", "/admin/users")] : [];
+#pragma warning restore CS0618
             o.CanManageCultures = IsAdmin;
         });
         var client = app.GetTestClient();

@@ -41,7 +41,11 @@ var app = builder.Build();
 
 var pathBase = builder.Configuration["ASPNETCORE_PATHBASE"] ?? "";
 if (!string.IsNullOrEmpty(pathBase))
+{
     app.UsePathBase(pathBase);
+    // Routing has to run after the path base is removed; otherwise POSTs under the prefix get 405.
+    app.UseRouting();
+}
 
 await app.InitializeCultureWayAsync();
 await SeedIfEmptyAsync(app);
@@ -56,7 +60,8 @@ app.MapGet("/", (IStringLocalizer<Program> localizer, HttpContext ctx, CultureWa
     return Results.Content(html, "text/html");
 });
 
-app.UseCultureWay("/translations");
+// The public demo: anyone may edit its translations.
+app.UseCultureWay("/translations").AllowAnonymous();
 
 app.Run();
 

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { fetchCultures, fetchTranslations } from '../api/api.ts';
+import { useEditorApi } from '../api/api.ts';
 import type { CultureDto, TranslationDto } from '../api/api.model.ts';
 
 interface TranslationsContextValue {
@@ -35,6 +35,7 @@ const TranslationsContext = createContext<TranslationsContextValue>({
 });
 
 export const TranslationsProvider = ({ children }: { children: React.ReactNode }) => {
+  const { fetchCultures, fetchTranslations } = useEditorApi();
   const [translations, setTranslations] = useState<TranslationDto[]>([]);
   const [cultures, setCultures] = useState<CultureDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,9 +65,22 @@ export const TranslationsProvider = ({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchCultures, fetchTranslations]);
 
-  useEffect(() => { void reload(); }, [reload]);
+  // The first load: state only changes when the requests come back (loading starts as true).
+  useEffect(() => {
+    let current = true;
+    Promise.all([fetchTranslations(), fetchCultures()]).then(
+      ([t, c]) => {
+        if (!current) return;
+        setTranslations(t);
+        setCultures(c);
+        loadedOnce.current = true;
+      },
+      (e: unknown) => { if (current) setError(e instanceof Error ? e.message : 'Failed to load'); },
+    ).finally(() => { if (current) setLoading(false); });
+    return () => { current = false; };
+  }, [fetchCultures, fetchTranslations]);
 
   return (
     <TranslationsContext.Provider value={{ translations, cultures, loading, error, reload, hiddenCultures, toggleCultureVisibility }}>

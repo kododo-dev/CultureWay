@@ -40,7 +40,7 @@ public class ReadOnlySourceApiTests : IAsyncLifetime
         });
 
         _app = builder.Build();
-        _app.UseCultureWay("/translations");
+        _app.UseCultureWay("/translations").AllowAnonymous();
         await _app.InitializeCultureWayAsync();
         await _app.StartAsync();
         _client = _app.GetTestClient();

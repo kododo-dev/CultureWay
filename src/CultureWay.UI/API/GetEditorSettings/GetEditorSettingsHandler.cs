@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Kododo.CultureWay.UI.API.GetEditorSettings;
 
+// The editor's frame (title, user, language) comes from Way.Shell now; the obsolete values are still reported for
+// clients of this API. The editor itself uses the permissions, the import limit and the per-request links.
+#pragma warning disable CS0618
 internal sealed class GetEditorSettingsHandler(EditorOptions options, IHttpContextAccessor httpContextAccessor)
     : IRequestHandler<GetEditorSettings, EditorSettingsDto>
 {
@@ -31,3 +34,4 @@ internal sealed class GetEditorSettingsHandler(EditorOptions options, IHttpConte
             options.MaxImportBytes));
     }
 }
+#pragma warning restore CS0618
