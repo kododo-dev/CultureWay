@@ -31,6 +31,8 @@ async function cellWithValue(page, value) {
 async function save(page) {
   const [response] = await Promise.all([
     page.waitForResponse((r) => r.url().endsWith('/translations/api/UpdateTranslations')),
+    // The editor loads the translations again after saving; a reload before that answers aborts it (WebKit reports it).
+    page.waitForResponse((r) => r.url().endsWith('/translations/api/GetTranslations')),
     page.getByRole('button', { name: 'Save' }).click(),
   ]);
   return response.status();
