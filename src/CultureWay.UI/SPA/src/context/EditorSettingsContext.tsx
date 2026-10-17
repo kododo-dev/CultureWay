@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { fetchEditorSettings } from '../api/api.ts';
+import { useEditorApi } from '../api/api.ts';
 import type { EditorSettingsDto } from '../api/api.model.ts';
 
 /** What the editor shows when the host sets nothing, or before its settings arrive. */
@@ -17,12 +17,13 @@ const defaults: EditorSettingsDto = {
 const EditorSettingsContext = createContext<EditorSettingsDto>(defaults);
 
 export const EditorSettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  const { fetchEditorSettings } = useEditorApi();
   const [settings, setSettings] = useState<EditorSettingsDto>(defaults);
 
   useEffect(() => {
     // Without the host's settings the editor still works, so a failure keeps the defaults.
     fetchEditorSettings().then(setSettings, () => {});
-  }, []);
+  }, [fetchEditorSettings]);
 
   return (
     <EditorSettingsContext.Provider value={settings}>

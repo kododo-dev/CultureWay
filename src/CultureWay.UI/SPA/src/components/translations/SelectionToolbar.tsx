@@ -8,7 +8,7 @@ import RestoreIcon from '@mui/icons-material/Restore';
 import UndoIcon from '@mui/icons-material/Undo';
 import CloseIcon from '@mui/icons-material/Close';
 import { useTheme } from '@mui/material/styles';
-import { useThemeMode } from '../../context/ThemeContext.tsx';
+import { useThemeMode } from '../../theme.ts';
 import { useI18n } from '../../i18n/I18nContext.tsx';
 import { MONO_FONT } from '../../utils/fonts.ts';
 

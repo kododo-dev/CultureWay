@@ -15,27 +15,33 @@ public sealed class EditorOptions
     /// <summary>
     /// The name shown at the top of the editor and in the browser tab. Defaults to <c>Translations</c>.
     /// </summary>
+    [Obsolete("The editor runs in Way.Shell: set ShellOptions.Title with services.AddWayShell(o => ...). This value is passed on to it.")]
     public string? Title { get; set; }
 
     /// <summary>
     /// Where the title links to, typically the host application's home page. No link when empty.
     /// </summary>
+    [Obsolete("The editor runs in Way.Shell: set ShellOptions.HomeUrl with services.AddWayShell(o => ...). This value is passed on to it.")]
     public string? HomeUrl { get; set; }
 
     /// <summary>
     /// The language of the editor's own interface (<c>en</c> or <c>pl</c>). When empty, the editor
     /// follows the browser's language and falls back to English.
     /// </summary>
+    [Obsolete("The editor runs in Way.Shell: set ShellOptions.Language with services.AddWayShell(o => ...). This value is passed on to it.")]
     public string? Language { get; set; }
 
     /// <summary>
-    /// Links to other pages of the host application, shown in the editor's side menu.
+    /// Links to other pages of the host application, shown in the editor's side menu. Evaluated on every request,
+    /// so they can depend on the user.
     /// </summary>
+    [Obsolete("The editor runs in Way.Shell: add links with services.AddWayShell(o => o.Links.Add(...)), or o.DynamicLinks.Add(...) for links that depend on the request. These are passed on to it.")]
     public Func<HttpContext, IEnumerable<EditorLink>>? Links { get; set; }
 
     /// <summary>
     /// The signed-in user, shown in the editor's side menu. Return <c>null</c> to show no user.
     /// </summary>
+    [Obsolete("The editor runs in Way.Shell: set ShellOptions.User with services.AddWayShell(o => ...). This value is passed on to it.")]
     public Func<HttpContext, EditorUser?>? User { get; set; }
 
     /// <summary>

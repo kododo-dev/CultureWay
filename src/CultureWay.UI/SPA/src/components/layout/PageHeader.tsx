@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Tooltip from '@mui/material/Tooltip';
@@ -12,12 +11,10 @@ import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
 import LanguageIcon from '@mui/icons-material/Language';
 import ImportExportIcon from '@mui/icons-material/ImportExport';
-import MenuIcon from '@mui/icons-material/Menu';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { useThemeMode } from '../../context/ThemeContext.tsx';
+import { PageHeader as ShellPageHeader } from '@kododo-dev/way-shell';
+import { useThemeMode } from '../../theme.ts';
 import { useI18n } from '../../i18n/I18nContext.tsx';
-import { useLayout } from '../../context/LayoutContext.tsx';
 import { MONO_FONT } from '../../utils/fonts.ts';
 
 const MONO = { fontFamily: MONO_FONT };
@@ -50,51 +47,17 @@ const PageHeader = ({
   const theme = useTheme();
   const { mode } = useThemeMode();
   const { t } = useI18n();
-  const { openMobileMenu } = useLayout();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isDark = mode === 'dark';
 
-  const borderColor = isDark ? '#2e2e2e' : '#e0e0e0';
-  const headerBg    = isDark ? '#1e1e1e' : '#fff';
   const searchBg    = isDark ? '#2a2a2a' : '#f5f5f5';
   const searchBorder = isDark ? '#363636' : '#ddd';
 
   const hasChanges = dirtyCount > 0;
 
+  // The shell's header bar (with the menu button on narrow screens) around the editor's search and actions.
   return (
     <Box sx={{ flexShrink: 0 }}>
-      <Box sx={{
-        display: 'flex',
-        alignItems: 'center',
-        px: 3, py: 1.5,
-        borderBottom: `1px solid ${borderColor}`,
-        background: headerBg,
-        gap: 1.5,
-        minHeight: 59,
-      }}>
-        {isMobile && (
-          <IconButton
-            size="small"
-            onClick={openMobileMenu}
-            sx={{ color: theme.palette.text.secondary, flexShrink: 0, mr: 0.5, '&:hover': { color: theme.palette.primary.main } }}
-          >
-            <MenuIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-        )}
-
-        <Box sx={{ minWidth: 0, flexShrink: 0 }}>
-          <Typography sx={{
-            ...MONO,
-            fontSize: '1rem',
-            fontWeight: 700,
-            color: theme.palette.text.primary,
-            lineHeight: 1.2,
-            whiteSpace: 'nowrap',
-          }}>
-            {namespaceLabel}
-          </Typography>
-        </Box>
-
+      <ShellPageHeader title={<Box component="span" sx={MONO}>{namespaceLabel}</Box>}>
         <Box sx={{
           flex: 1,
           mx: 2,
@@ -242,7 +205,7 @@ const PageHeader = ({
             <AddIcon sx={{ fontSize: 18 }} />
           </IconButton>
         </Tooltip>
-      </Box>
+      </ShellPageHeader>
     </Box>
   );
 };

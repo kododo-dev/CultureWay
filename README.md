@@ -119,39 +119,56 @@ Everyone who can open the editor may import unless you set `CanImport` (see belo
 
 ## Security
 
-The editor is not protected by default. Anyone who can reach the route can change or delete translations, so restrict it before exposing the app:
+Outside the Development environment the editor and its API answer `403` until you decide who may use them:
 
 ```csharp
 app.UseCultureWay("/translations").RequireAuthorization("Admin");
+
+// or, for a public demo:
+app.UseCultureWay("/translations").AllowAnonymous();
 ```
+
+A fallback authorization policy counts as a decision too. An editor nobody decided on is reported in the log at startup.
 
 To let only some of the users who can open the editor add or delete languages, set `CanManageCultures` (see below). The others can still edit translations and hide languages, and the API answers their language changes with 403.
 
 ## Fitting the editor into your app
 
-By default the editor is a standalone page. `AddEditor` takes options that make it part of your application:
+The editor runs in [Way.Shell](https://github.com/kododo-dev/WayShell), the UI shell shared by the Kododo Way libraries. The title, home link, language, links and signed-in user are the shell's settings, shared with every other Way in the app; with several Ways, the shell's panel shows them together:
+
+```csharp
+builder.Services.AddWayShell(o =>
+{
+    o.Title    = "My app";            // top of the side menu and the browser tab
+    o.HomeUrl  = "~/";                // the title links here; "~/" is relative to the app
+    o.Language = "pl";                // the interface language: en or pl; empty follows the browser
+    o.Links.Add(new ShellLink("Home", "~/") { Icon = "home" });
+    o.DynamicLinks.Add(ctx => ctx.User.IsInRole("Admin")    // links evaluated per request
+        ? [new ShellLink("Users", "~/admin/users") { Icon = "users" }]
+        : []);
+    o.User     = ctx => ctx.User.Identity?.IsAuthenticated == true
+        ? new ShellUser(ctx.User.Identity.Name!) { AccountUrl = "~/account", SignOutUrl = "~/logout" }
+        : null;
+});
+
+app.UseCultureWay("/translations").RequireAuthorization("Admin");
+app.UseWayShell("/admin").RequireAuthorization();   // optional: one panel with every Way
+```
+
+What only the editor needs stays in `AddEditor`:
 
 ```csharp
 x.AddEditor(editor =>
 {
-    editor.Title    = "My app";       // top of the side menu and the browser tab
-    editor.HomeUrl  = "/";            // the title links here
-    editor.Language = "pl";           // editor's own interface: en or pl; empty follows the browser
-    editor.Links    = ctx => ctx.User.IsInRole("Admin")
-        ? [new EditorLink("Users", "/admin/users") { Icon = EditorLinkIcons.Users }]
-        : [];
-    editor.User     = ctx => ctx.User.Identity?.IsAuthenticated == true
-        ? new EditorUser(ctx.User.Identity.Name!) { AccountUrl = "/account", SignOutUrl = "/logout" }
-        : null;
     editor.CanManageCultures = ctx => ctx.User.IsInRole("Admin");
     editor.CanImport      = ctx => ctx.User.IsInRole("Admin");
     editor.MaxImportBytes = 1024 * 1024;
 });
 ```
 
-The settings that take an `HttpContext` run on every request, so they can depend on who is signed in. Links and the user appear at the bottom of the side menu. A link can show one of the icons in `EditorLinkIcons` (home, translations, users, key, history); without one it shows an arrow. The link to the page the editor is on is highlighted, so a host can list the editor itself among its own pages. The sign-out button submits a plain form POST to `SignOutUrl` without an antiforgery token, so that endpoint has to accept one.
+The settings that take an `HttpContext` run on every request, so they can depend on who is signed in. `EditorOptions.Title`, `HomeUrl`, `Language`, `Links` and `User` are obsolete; when set, they are passed on to the shell (`Links` to `ShellOptions.DynamicLinks`). The sign-out button submits a plain form POST to `SignOutUrl` without an antiforgery token, so that endpoint has to accept one.
 
-The editor also remembers the light or dark theme in `localStorage` under `cultureway.theme` (`light` or `dark`). Your own pages on the same origin can read that key to match it. When a request fails because the session expired (a 401, or a redirect to a sign-in page), the editor asks the user to sign in again in a new tab, so edits that were not saved stay on the page.
+The shell remembers the theme and the language in `localStorage` (`way-shell:theme`, `way-shell:language`). The selected namespace is in the address (`/translations/#/ns/Admin.Users`), so it can be linked to. When a request fails because the session expired (a 401, or a redirect to a sign-in page), the shell asks the user to sign in again in a new tab, so edits that were not saved stay on the page.
 
 ## Limitations
 

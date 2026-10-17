@@ -18,6 +18,14 @@
         <PackageReference Include="MiniExcel" />
     </ItemGroup>
 
+    <ItemGroup Condition="'$(UseLocalWayShell)' != 'true'">
+        <PackageReference Include="Kododo.Way.Shell" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseLocalWayShell)' == 'true'">
+        <ProjectReference Include="$(WayShellSource)\Way.Shell\Way.Shell.csproj" />
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\CultureWay\CultureWay.csproj" />
     </ItemGroup>
@@ -43,10 +51,10 @@
         <Version>1.0.0-local</Version>
     </PropertyGroup>
 
-    <!-- Fail packing instead of silently shipping a UI package without the embedded SPA. -->
+    <!-- Fail packing instead of silently shipping a UI package without the embedded module. -->
     <Target Name="EnsureSpaBuilt" BeforeTargets="Pack">
-        <Error Condition="!Exists('$(MSBuildProjectDirectory)/SPA/dist/index.html')"
-               Text="SPA\dist\index.html is missing. Run 'npm ci &amp;&amp; npm run build' in src/CultureWay.UI/SPA before packing." />
+        <Error Condition="!Exists('$(MSBuildProjectDirectory)/SPA/dist/way.js')"
+               Text="SPA\dist\way.js is missing. Run 'npm ci &amp;&amp; npm run build' in src/CultureWay.UI/SPA before packing." />
     </Target>
 
 </Project>

@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import { useShell } from '@kododo-dev/way-shell';
 import { useTranslations } from './TranslationsContext.tsx';
 
 export function extractNamespace(key: string): string {
@@ -76,9 +78,27 @@ const NamespaceContext = createContext<NamespaceContextValue>({
   setSelectedNamespace: () => {},
 });
 
+const ROOT_PATH = 'root';
+const NAMESPACE_PATH = 'ns/';
+
+/** The namespace in the address, relative to the Way's root: '' all, 'root' the keys without one, 'ns/A.B' a namespace. */
+function namespaceOf(path: string): string | null {
+  if (path === ROOT_PATH) return '';
+  if (path.startsWith(NAMESPACE_PATH)) return decodeURIComponent(path.slice(NAMESPACE_PATH.length)) || null;
+  return null;
+}
+
 export const NamespaceProvider = ({ children }: { children: React.ReactNode }) => {
   const { translations } = useTranslations();
-  const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
+  // The selection lives in the address, so it can be linked to, goes back with the browser, and closes the shell's
+  // menu on narrow screens. Paths are relative to the Way's root through the shell's navigate().
+  const { navigate, wayId } = useShell();
+  const selectedNamespace = namespaceOf(useParams()['*'] ?? '');
+  const setSelectedNamespace = useCallback(
+    (ns: string | null) =>
+      navigate(wayId, ns === null ? '' : ns === '' ? ROOT_PATH : `${NAMESPACE_PATH}${encodeURIComponent(ns)}`),
+    [navigate, wayId],
+  );
 
   const { namespaceTree, namespacePaths, hasRootKeys } = useMemo(() => {
     const nsSet = new Set<string>();

@@ -227,7 +227,7 @@ public class PostgresApiTests : IAsyncLifetime
         });
 
         var app = builder.Build();
-        app.UseCultureWay("/translations");
+        app.UseCultureWay("/translations").AllowAnonymous();
         await app.InitializeCultureWayAsync();
         await app.StartAsync();
         return app;

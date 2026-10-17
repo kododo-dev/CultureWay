@@ -84,7 +84,7 @@ public class ImportExportApiTests
         });
 
         var app = builder.Build();
-        app.UseCultureWay("/translations");
+        app.UseCultureWay("/translations").AllowAnonymous();
         await app.InitializeCultureWayAsync();
         await app.StartAsync();
 

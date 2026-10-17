@@ -14,14 +14,14 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useTheme } from '@mui/material/styles';
+import { WayMenu } from '@kododo-dev/way-shell';
 import { useI18n } from '../../i18n/I18nContext.tsx';
 import { useNamespace, type NamespaceNode } from '../../context/NamespaceContext.tsx';
 import { MONO_FONT } from '../../utils/fonts.ts';
 
-const NamespaceTreeItem = ({ node, depth, onNavigate }: {
+const NamespaceTreeItem = ({ node, depth }: {
   node: NamespaceNode;
   depth: number;
-  onNavigate?: () => void;
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -47,7 +47,7 @@ const NamespaceTreeItem = ({ node, depth, onNavigate }: {
       <ListItem disablePadding>
         <ListItemButton
           selected={active}
-          onClick={() => { setSelectedNamespace(node.path); onNavigate?.(); }}
+          onClick={() => setSelectedNamespace(node.path)}
           sx={{ pl: 2 + depth * 1.75 }}
         >
           {hasChildren ? (
@@ -68,7 +68,7 @@ const NamespaceTreeItem = ({ node, depth, onNavigate }: {
       {hasChildren && (
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           {node.children.map(child => (
-            <NamespaceTreeItem key={child.path} node={child} depth={depth + 1} onNavigate={onNavigate} />
+            <NamespaceTreeItem key={child.path} node={child} depth={depth + 1} />
           ))}
         </Collapse>
       )}
@@ -76,7 +76,8 @@ const NamespaceTreeItem = ({ node, depth, onNavigate }: {
   );
 };
 
-const SideMenu = ({ onNavigate }: { onNavigate?: () => void }) => {
+// The editor's items in the shell's side menu: all keys, the namespace tree and the host's per-request links.
+const SideMenu = () => {
   const { t } = useI18n();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -97,15 +98,13 @@ const SideMenu = ({ onNavigate }: { onNavigate?: () => void }) => {
     },
   });
 
-  const navigate = (ns: string | null) => {
-    setSelectedNamespace(ns);
-    onNavigate?.();
-  };
+  const navigate = (ns: string | null) => setSelectedNamespace(ns);
 
   const showNamespaces = namespaceTree.length > 0 || hasRootKeys;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+    <WayMenu>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
       <Box sx={{ flexShrink: 0, py: 1 }}>
         <List dense disablePadding>
           <ListItem disablePadding>
@@ -149,13 +148,14 @@ const SideMenu = ({ onNavigate }: { onNavigate?: () => void }) => {
                 </ListItem>
               )}
               {namespaceTree.map(node => (
-                <NamespaceTreeItem key={node.path} node={node} depth={0} onNavigate={onNavigate} />
+                <NamespaceTreeItem key={node.path} node={node} depth={0} />
               ))}
             </List>
           </Box>
         </Box>
       )}
     </Box>
+    </WayMenu>
   );
 };
 

@@ -4,8 +4,8 @@ using Kododo.CultureWay.UI.API.DeleteCulture;
 using Kododo.CultureWay.UI.API.PreviewImport;
 using Kododo.CultureWay.UI.API.SetDefaultCulture;
 using Kododo.Reiho.AspNetCore.API;
+using Kododo.Way.Shell;
 using Microsoft.AspNetCore.Http;
-using Kododo.Reiho.AspNetCore.SPA;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Routing;
@@ -19,10 +19,14 @@ namespace Kododo.CultureWay.UI;
 /// </summary>
 public static class EndpointRouteBuilderExtensions
 {
+    /// <summary>The editor as a Way.Shell module: <c>SPA/dist</c> is built with the wayModule() preset.</summary>
+    internal static readonly WayModule Module =
+        new("translations", "Translations", typeof(EndpointRouteBuilderExtensions).Assembly, "SPA/dist") { Icon = "translate" };
+
     extension(IEndpointRouteBuilder endpoints)
     {
         /// <summary>
-        /// Mounts the CultureWay translation editor and its API at the specified path.
+        /// Mounts the CultureWay translation editor and its API at the specified path, in Way.Shell.
         /// </summary>
         /// <param name="path">
         /// The base path for the CultureWay UI. Defaults to <c>/translations</c>.
@@ -31,6 +35,9 @@ public static class EndpointRouteBuilderExtensions
         /// <returns>
         /// A <see cref="RouteGroupBuilder"/> that can be used to apply additional
         /// middleware such as authentication or authorization policies.
+        /// Outside the Development environment the editor and its API answer <c>403</c> until authorization is
+        /// required here, anonymous access is allowed explicitly (<c>AllowAnonymous()</c>) or
+        /// <c>ShellOptions.AllowAnonymous</c> is set.
         /// </returns>
         /// <remarks>
         /// Call this after <see cref="HostExtensions.InitializeCultureWayAsync"/> so that any
@@ -45,9 +52,8 @@ public static class EndpointRouteBuilderExtensions
         /// </example>
         public RouteGroupBuilder UseCultureWay(string path = "/translations")
         {
-            var group = endpoints.MapGroup(path);
+            var group = endpoints.MapWay(Module, path);
             group.MapApi();
-            group.MapEmbeddedSpa(typeof(EndpointRouteBuilderExtensions).Assembly);
 
             var cultureWayOptions = endpoints.ServiceProvider.GetService<CultureWayOptions>();
             var requestLocalizationOptions = endpoints.ServiceProvider.GetService<IOptions<RequestLocalizationOptions>>();

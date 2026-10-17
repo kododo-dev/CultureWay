@@ -19,8 +19,8 @@ await app.InitializeCultureWayAsync();
 app.UseCultureWay("/translations").RequireAuthorization("Admin");
 ```
 
-The editor lets you edit translations, add/delete languages, choose the default language, and hide languages per browser. It is not protected by default, so restrict access before exposing the app.
+The editor lets you edit translations, add/delete languages, choose the default language, and hide languages per browser. Outside the Development environment it answers `403` until you decide who may use it (`RequireAuthorization(...)`, or `AllowAnonymous()` for a public demo).
 
-`AddEditor(editor => ...)` fits the editor into your application: a title and home link, links to your other pages, the signed-in user with a sign-out button, the interface language, and `CanManageCultures` to decide who may add and delete languages.
+The editor runs in [Kododo.Way.Shell](https://www.nuget.org/packages/Kododo.Way.Shell): the title, home link, links, signed-in user and interface language are set with `services.AddWayShell(o => ...)`, shared with the other Ways in the app. `AddEditor(editor => ...)` keeps what only the editor needs: per-request links, `CanManageCultures`, `CanImport` and `MaxImportBytes`.
 
 Full documentation: https://github.com/kododo-dev/CultureWay

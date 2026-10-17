@@ -7,11 +7,11 @@ import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
 import { useTheme } from '@mui/material/styles';
-import { useThemeMode } from '../context/ThemeContext.tsx';
+import { useThemeMode } from '../theme.ts';
 import { useTranslations } from '../context/TranslationsContext.tsx';
 import { useNamespace, extractNamespace } from '../context/NamespaceContext.tsx';
 import { useI18n } from '../i18n/I18nContext.tsx';
-import { ApiError, saveTranslations } from '../api/api.ts';
+import { ApiError, useEditorApi } from '../api/api.ts';
 import type { TranslationDto, TranslationKeyDto } from '../api/api.model.ts';
 import PageHeader from '../components/layout/PageHeader.tsx';
 import AddKeyModal from '../components/translations/AddKeyModal.tsx';
@@ -60,6 +60,7 @@ const TranslationsPage = () => {
   const { t } = useI18n();
   const theme = useTheme();
   const { mode } = useThemeMode();
+  const { saveTranslations } = useEditorApi();
   const isDark = mode === 'dark';
 
   const borderColor = isDark ? '#2e2e2e' : '#e0e0e0';

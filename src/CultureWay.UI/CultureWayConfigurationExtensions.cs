@@ -1,5 +1,6 @@
 using Kododo.CultureWay.UI.ImportExport;
 using Kododo.Reiho.AspNetCore.API;
+using Kododo.Way.Shell;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kododo.CultureWay.UI;
@@ -45,6 +46,26 @@ public static class CultureWayConfigurationExtensions
         configuration.Services.AddSingleton(editorOptions);
         configuration.Services.AddScoped<ImportPlanner>();
         configuration.Services.AddRequestHandlers(typeof(CultureWayConfigurationExtensions).Assembly);
+
+        // The editor runs in Way.Shell; what EditorOptions used to set for the editor's frame now belongs to the shell.
+        // Only the values set here are passed on, so the host's own AddWayShell settings stay unless it set both.
+        configuration.Services.AddWayShell(shell => ForwardToShell(editorOptions, shell));
         return configuration;
     }
+
+#pragma warning disable CS0618 // passes the obsolete EditorOptions on to ShellOptions
+    private static void ForwardToShell(EditorOptions editor, ShellOptions shell)
+    {
+        if (editor.Title is not null) shell.Title = editor.Title;
+        if (editor.HomeUrl is not null) shell.HomeUrl = editor.HomeUrl;
+        if (editor.Language is not null) shell.Language = editor.Language;
+        if (editor.User is { } user)
+            shell.User = context => user(context) is { } u
+                ? new ShellUser(u.Name) { AccountUrl = u.AccountUrl, SignOutUrl = u.SignOutUrl }
+                : null;
+        // The icon names of EditorLinkIcons are icon names of the shell too.
+        if (editor.Links is { } links)
+            shell.DynamicLinks.Add(context => links(context).Select(l => new ShellLink(l.Label, l.Url) { Icon = l.Icon }));
+    }
+#pragma warning restore CS0618
 }
