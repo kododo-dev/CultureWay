@@ -43,16 +43,24 @@ async function save(page) {
   record('editor opens in the shell', await visible(page.getByRole('heading', { name: 'All' })));
   record('title from the Way', (await page.title()) === 'Translations', await page.title());
   record('namespaces in the shell menu', await visible(menu.getByText('Common')));
+  // Each flag is a separate file the module loads when a culture shows it.
+  record('flags of the cultures load', await visible(page.locator('main img[src^="data:image/svg+xml"]')));
 
   const font = await page.locator('main h1').first().evaluate((e) => getComputedStyle(e).fontFamily);
   record("CultureWay's monospace theme in its area", /IBM Plex Mono/.test(font), font);
 
+  // Moving around the editor keeps what was loaded: a reload would drop changes not saved yet.
+  let reloads = 0;
+  const countReloads = (r) => { if (r.url().endsWith('/api/GetTranslations')) reloads++; };
+  page.on('request', countReloads);
   await menu.getByText('Common').click();
   record('namespace from the menu', (await visible(page.getByRole('heading', { name: 'Common' }))) && url(page).endsWith('#/ns/Common'), url(page));
   await menu.getByText('2', { exact: true }).click();
   record('nested namespace', (await visible(page.getByRole('heading', { name: 'Feature.2' }))) && url(page).endsWith('#/ns/Feature.2'), url(page));
   await menu.getByText('Nav').click();
   record('another namespace from a nested one (paths from the Way root)', (await visible(page.getByRole('heading', { name: 'Nav' }))) && url(page).endsWith('#/ns/Nav'), url(page));
+  page.off('request', countReloads);
+  record('namespaces do not load the translations again', reloads === 0, `${reloads}`);
   await page.goBack();
   record('browser back returns to the previous namespace', (await visible(page.getByRole('heading', { name: 'Feature.2' }))) && url(page).endsWith('#/ns/Feature.2'), url(page));
 

@@ -1,4 +1,4 @@
-import * as Flags from 'country-flag-icons/react/3x2';
+import { useEffect, useState } from 'react';
 
 const LANGUAGE_DEFAULT_REGION: Record<string, string> = {
   en: 'US', pl: 'PL', de: 'DE', fr: 'FR', es: 'ES', it: 'IT', pt: 'PT', nl: 'NL',
@@ -22,7 +22,21 @@ function regionCodeFor(culture: string): string | null {
   return region && /^[A-Z]{2}$/.test(region) ? region : null;
 }
 
-const FlagsByRegion = Flags as unknown as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>;
+// One small file per flag, loaded when a culture shows it: all flags together would be most of the module.
+const FLAG_FILES = import.meta.glob<string>('/node_modules/country-flag-icons/string/3x2/[A-Z][A-Z].js', { import: 'default' });
+const flagUrls = new Map<string, Promise<string | null>>();
+
+function flagUrl(region: string): Promise<string | null> {
+  let url = flagUrls.get(region);
+  if (!url) {
+    const load = FLAG_FILES[`/node_modules/country-flag-icons/string/3x2/${region}.js`];
+    url = load
+      ? load().then((svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`, () => null)
+      : Promise.resolve(null);
+    flagUrls.set(region, url);
+  }
+  return url;
+}
 
 interface CultureFlagProps {
   code: string;
@@ -31,15 +45,22 @@ interface CultureFlagProps {
 
 const CultureFlag = ({ code, size = 13 }: CultureFlagProps) => {
   const region = regionCodeFor(code);
-  const FlagComponent = region ? FlagsByRegion[region] : undefined;
+  const [url, setUrl] = useState<{ region: string; url: string | null }>();
 
-  if (!FlagComponent) return null;
+  useEffect(() => {
+    if (!region) return;
+    let current = true;
+    flagUrl(region).then((loaded) => current && setUrl({ region, url: loaded }));
+    return () => {
+      current = false;
+    };
+  }, [region]);
 
-  return (
-    <FlagComponent
-      style={{ width: size * 1.5, height: size, borderRadius: 2, flexShrink: 0, display: 'block' }}
-    />
-  );
+  const style = { width: size * 1.5, height: size, borderRadius: 2, flexShrink: 0, display: 'block' } as const;
+  if (!region) return null;
+  // The same box while the flag loads, so the row does not shift.
+  if (url?.region !== region) return <span style={style} aria-hidden />;
+  return url.url ? <img src={url.url} alt="" style={style} /> : null;
 };
 
 export default CultureFlag;
