@@ -6,8 +6,11 @@ on:
       - 'v*'
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
+  publish:    # Trusted Publishing: nuget.org exchanges the workflow's OIDC token for a short-lived API key, so the repository
+    # keeps no NuGet API key. Policy on nuget.org: owner kododo-dev, this repository, workflow publish-nuget.yml.
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -16,15 +19,13 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
-            8.x
-            9.x
             10.x
-          dotnet-quality: preview
+            11.x
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Extract version from tag
         id: version
@@ -59,10 +60,15 @@ jobs:
           test "$(ls ./nupkgs/*.snupkg | wc -l)" -eq 4
 
       # Symbol packages (.snupkg) in the same folder are pushed automatically alongside each .nupkg.
-      - name: Push to NuGet
-        run: >
+      - name: NuGet login (Trusted Publishing)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+        run: >
           dotnet nuget push "./nupkgs/*.nupkg"
-          --api-key ${{ secrets.NUGET_API_KEY }}
+          --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 

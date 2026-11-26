@@ -24,7 +24,7 @@ A live demo is available at [kododo.dev/cultureway/demo](https://kododo.dev/cult
 | `Kododo.CultureWay.UI` | [![NuGet](https://img.shields.io/nuget/vpre/Kododo.CultureWay.UI)](https://www.nuget.org/packages/Kododo.CultureWay.UI) | Embedded web UI |
 | `Kododo.CultureWay.PostgreSQL` | [![NuGet](https://img.shields.io/nuget/vpre/Kododo.CultureWay.PostgreSQL)](https://www.nuget.org/packages/Kododo.CultureWay.PostgreSQL) | PostgreSQL persistence store |
 
-Targets `net8.0`, `net9.0` and `net10.0`.
+Targets `net10.0` and `net11.0`.
 
 ## Quick start
 
@@ -186,7 +186,7 @@ The members that deal with languages (`GetSupportedCulturesAsync`, `AddSupported
 ```bash
 cd src/CultureWay.UI/SPA && npm ci && npm run build
 cd ../../..
-dotnet run --project src/CultureWay.Demo.Web --framework net10.0
+dotnet run --project src/CultureWay.Demo.Web --framework net11.0
 ```
 
 Without a `DemoDB` connection string the demo uses the in-memory store.

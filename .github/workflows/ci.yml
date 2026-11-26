@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: src/CultureWay.UI/SPA/package-lock.json
 
@@ -33,13 +33,11 @@ jobs:
         run: npm run build
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
-            8.x
-            9.x
             10.x
-          dotnet-quality: preview
+            11.x
 
       - name: Restore
         run: dotnet restore src/CultureWay.Tests/CultureWay.Tests.csproj
@@ -66,12 +64,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: src/CultureWay.UI/SPA/package-lock.json
 
@@ -82,13 +80,11 @@ jobs:
           npm run build
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
-            8.x
-            9.x
             10.x
-          dotnet-quality: preview
+            11.x
 
       - name: Restore
         run: dotnet restore src/CultureWay.PostgreSQL.Tests/CultureWay.PostgreSQL.Tests.csproj

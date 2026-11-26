@@ -19,7 +19,7 @@ public class ReadOnlySourceApiTests : IAsyncLifetime
 
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var source = Substitute.For<IReadOnlySource>();
         source.GetDefaultsAsync(Arg.Any<CancellationToken>()).Returns(
@@ -46,7 +46,7 @@ public class ReadOnlySourceApiTests : IAsyncLifetime
         _client = _app.GetTestClient();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _app.StopAsync();
